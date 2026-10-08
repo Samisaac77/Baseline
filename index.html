@@ -1,0 +1,3053 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Baseline — Autonomous control plane</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@300;400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400&display=swap" rel="stylesheet" />
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="motion.css" />
+  <style>
+    :root {
+      --black: #000;
+      --white: #fff;
+      --bg-app: #f8f9fa;
+      --stone-300: #d6d3d1;
+      --neutral-100: #f3f4f6;
+      --neutral-200: #e5e7eb;
+      --neutral-300: #d1d5db;
+      --neutral-400: #9ca3af;
+      --neutral-500: #6b7280;
+      --grayscale-500: #737373;
+      --ink: #111827;
+      --red-400: #f87171;
+      --red-500: #ef4444;
+      --green-400: #4ade80;
+      --green-text: #00a56f;
+
+      --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: 'Geist', system-ui, -apple-system, sans-serif;
+      --inter: 'Inter', system-ui, -apple-system, sans-serif;
+      --grotesk: 'Space Grotesk', system-ui, sans-serif;
+
+      --hair: 0.417px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    p { margin: 0; }
+    img { display: block; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ───────────── Hero section ───────────── */
+    .hero {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 150px 0 50px;
+      isolation: isolate;
+    }
+
+    /* Faint grid background (1440 × 627 in the design) */
+    .hero-bg {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 627px;
+      overflow: hidden;
+      background: var(--bg-app);
+      z-index: -1;
+    }
+    .hero-grid {
+      /* 3360px wide + centered keeps lines at the same x as the 1440 frame
+         (vertical rules at 26, 58, … 1402) on any viewport width. */
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 3360px;
+      height: 627px;
+      transform: translateX(-50%);
+      opacity: 0.65;
+      background-image:
+        linear-gradient(to right, var(--stone-300) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--stone-300) 1px, transparent 1px);
+      background-size: 32px 100%, 100% 32px;
+      background-position: 26px 0, 0 0;
+      background-repeat: repeat-x, repeat-y;
+    }
+    .hero-fade {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(857.5px 347.15px at 50% 50%, rgba(255, 255, 255, 0) 0%, #fff 100%);
+    }
+
+    .content-frame {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 150px;
+      width: 100%;
+      overflow: clip;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 50px;
+      width: 100%;
+      padding: 0 16px;
+    }
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: var(--white);
+      border: 0.5px solid var(--neutral-200);
+      border-radius: 52px;
+      box-shadow: 2px 2px 15px 0 rgba(0, 0, 0, 0.07);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: -0.36px;
+      line-height: normal;
+      white-space: nowrap;
+    }
+    .mark-bar {
+      flex-shrink: 0;
+      width: 5.709px;
+      height: 17.418px;
+      background: var(--black);
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+    }
+    .hero-title {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 56px;
+      line-height: normal;
+      letter-spacing: -0.06em;            /* -3.36px @ 56px */
+      color: var(--black);
+      margin: 0;
+    }
+    .hero-sub {
+      font-family: var(--sans);
+      font-weight: 400;
+      font-size: 22px;
+      line-height: 33px;
+      letter-spacing: -0.02em;            /* -0.44px @ 22px */
+      color: var(--grayscale-500);
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 20px;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 16px;
+      line-height: normal;
+      letter-spacing: -0.48px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--black); color: var(--white); }
+    .btn-primary .mark-bar { background: var(--white); }
+    .btn-secondary {
+      background: var(--white);
+      color: var(--black);
+      border: 0.5px solid var(--neutral-200);
+      box-shadow: 2px 2px 15px 0 rgba(0, 0, 0, 0.07);
+    }
+
+    /* ───────────── Product mockup ───────────── */
+    .mockup-stage {
+      /* Width/height scale down with the viewport (set by JS); 1200 × 686 at desktop. */
+      position: relative;
+      width: 1200px;
+      height: 686px;
+      flex-shrink: 0;
+    }
+    .mockup-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1200px;
+      height: 686px;
+      overflow: hidden;
+      border-radius: 8px;
+      filter: drop-shadow(-5px -5px 22.5px rgba(0, 0, 0, 0.06));
+      transform-origin: 0 0;
+    }
+    .mockup {
+      display: flex;
+      align-items: flex-start;
+      width: 1200px;
+      height: 895.833px;
+      overflow: hidden;
+      background: var(--bg-app);
+      border: 0.5px solid var(--neutral-200);
+      border-radius: 8px;
+      font-family: var(--inter);
+      color: var(--black);
+    }
+    .mockup-fade {
+      position: absolute;
+      left: -21px;
+      top: -0.42px;
+      width: 1240px;
+      height: 703px;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 79.445%, #fff 98.72%);
+    }
+
+    /* shared mockup atoms */
+    .ico { flex-shrink: 0; width: 13.333px; height: 13.333px; }
+    .ico img { width: 100%; height: 100%; }
+    .t-label { font-size: 8.333px; line-height: 1.5; letter-spacing: -0.4167px; }
+    .t-body  { font-size: 10px;    line-height: 1.5; letter-spacing: -0.5px; }
+    .t-small { font-size: 9.167px; line-height: 1.5; letter-spacing: -0.4583px; }
+    .muted { color: var(--neutral-500); }
+    .faint { color: var(--neutral-400); }
+    .mono { font-family: var(--mono); }
+    .medium { font-weight: 500; }
+    .nowrap { white-space: nowrap; }
+
+    .control {
+      display: inline-flex;
+      align-items: center;
+      gap: 6.667px;
+      height: 33.333px;
+      padding: 0 10px;
+      background: var(--white);
+      border: var(--hair) solid var(--neutral-200);
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 10px;
+      letter-spacing: -0.5px;
+      line-height: normal;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .control.dark { background: var(--black); border-color: var(--black); color: var(--white); }
+    .control.tight { gap: 5.833px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 12.5px;
+      border: var(--hair) solid;
+      border-radius: 832.5px;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: -0.5px;
+      line-height: normal;
+      white-space: nowrap;
+    }
+    .badge.critical { background: rgba(239, 68, 68, 0.08); border-color: var(--red-400); color: var(--red-500); }
+    .badge.healthy  { background: rgba(16, 185, 129, 0.08); border-color: var(--green-400); color: var(--green-text); }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      background: var(--white);
+      font-weight: 500;
+      font-size: 9.167px;
+      letter-spacing: -0.4583px;
+      line-height: normal;
+      white-space: nowrap;
+      border-radius: 3.333px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 26.667px;
+      flex-shrink: 0;
+      width: 186.667px;
+      height: 895.833px;
+      padding: 13.333px;
+      overflow: hidden;
+      background: var(--white);
+      border-right: var(--hair) solid var(--neutral-200);
+    }
+    .brand { display: flex; align-items: center; gap: 8.064px; height: 32.256px; }
+    .brand-mark {
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      width: 25.805px; height: 25.805px;
+      background: var(--black);
+    }
+    .brand-mark span { width: 7.258px; height: 14.515px; background: var(--white); }
+    .brand-id {
+      display: flex; flex-direction: column; justify-content: space-between;
+      height: 100%;
+      white-space: nowrap;
+    }
+    .brand-name { font-weight: 700; font-size: 16.128px; letter-spacing: -0.8064px; line-height: normal; }
+    .brand-sub { font-size: 8.064px; line-height: 1.5; letter-spacing: -0.4032px; color: var(--neutral-500); }
+
+    .nav-groups { display: flex; flex-direction: column; gap: 26.667px; width: 100%; }
+    .nav-group { display: flex; flex-direction: column; gap: 13.333px; width: 100%; }
+    .nav-links { display: flex; flex-direction: column; gap: 6.667px; width: 100%; }
+    .nav-item {
+      display: flex; align-items: center; gap: 6.667px;
+      width: 100%; height: 33.333px;
+      padding: 0 10px;
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--neutral-500);
+      font-size: 10px; letter-spacing: -0.5px; line-height: normal;
+    }
+    .nav-item > p { flex: 1 0 0; min-width: 1px; }
+    .nav-item.active { background: var(--black); color: var(--white); }
+    .count {
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.667px 5px;
+      border-radius: 832.5px;
+      background: var(--red-500);
+      color: var(--white);
+      font-family: var(--mono);
+      font-size: 8.333px; letter-spacing: -0.4167px; line-height: normal;
+    }
+    .sidebar-spacer { flex: 1 0 0; min-height: 80px; width: 100%; }
+    .workspace-status {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 13.333px;
+      width: 100%;
+      padding: 13.333px;
+      background: var(--bg-app);
+      border: var(--hair) solid var(--neutral-200);
+    }
+    .workspace-status .tag { padding: 5.833px 8.333px; border: var(--hair) solid var(--neutral-300); }
+    .operator {
+      display: flex; align-items: center; gap: 13.333px;
+      width: 100%;
+      padding-top: 13.333px;
+      border-top: var(--hair) solid var(--neutral-200);
+    }
+    .avatar {
+      position: relative;
+      flex-shrink: 0;
+      width: 26.667px; height: 26.667px;
+      border-top: var(--hair) solid var(--neutral-200);
+    }
+    .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .operator-id { display: flex; flex-direction: column; line-height: 1.5; white-space: nowrap; }
+
+    /* Workspace */
+    .workspace { display: flex; flex-direction: column; flex: 1 0 0; min-width: 1px; overflow: hidden; }
+    .utility-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+      width: 100%; height: 60px;
+      padding: 0 26.667px;
+      background: var(--white);
+      border-bottom: var(--hair) solid var(--neutral-200);
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .utility-actions { display: flex; align-items: center; gap: 20px; }
+    .search {
+      display: flex; align-items: center; gap: 13.333px;
+      width: 200px; height: 26.667px;
+      padding: 0 6.667px;
+      background: var(--bg-app);
+      border-top: var(--hair) solid var(--neutral-200);
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .divider { width: 0.833px; height: 20px; background: var(--neutral-200); }
+
+    .dash { display: flex; flex-direction: column; gap: 8.333px; width: 100%; padding: 8.333px 26.667px; }
+    .dash-overview { display: flex; flex-direction: column; gap: 8.333px; width: 100%; }
+    .row-between { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .page-title { font-weight: 500; font-size: 20px; letter-spacing: -1px; line-height: normal; white-space: nowrap; }
+    .filters { display: flex; align-items: flex-start; gap: 4.167px; }
+    .snapshot { display: flex; align-items: center; gap: 13.333px; }
+
+    .metrics { display: flex; align-items: flex-start; gap: 8.333px; width: 100%; }
+    .card {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 13.333px;
+      flex-shrink: 0;
+      height: 266.667px;
+      padding: 20px;
+      overflow: hidden;
+      background: var(--white);
+      border: var(--hair) solid var(--neutral-200);
+      border-radius: 10px;
+    }
+    .card-uptime { width: 226.667px; }
+    .card-network { width: 266.667px; }
+    .card-incidents { flex: 1 0 0; min-width: 1px; flex-shrink: 1; padding: 12.5px 20px; }
+    .card-title { font-size: 11.667px; line-height: 1.5; letter-spacing: -0.5833px; white-space: nowrap; }
+    .stack { display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
+    .big-num { font-family: var(--mono); font-weight: 500; line-height: normal; white-space: nowrap; }
+    .card-detail {
+      display: flex; flex-direction: column; gap: 6.667px;
+      width: 100%;
+      padding-top: 13.333px;
+      border-top: var(--hair) solid var(--neutral-200);
+      white-space: nowrap;
+    }
+
+    .uptime-bars { display: flex; align-items: flex-end; gap: 6.667px; width: 100%; height: 26.667px; overflow: hidden; }
+    .uptime-bars i { flex-shrink: 0; width: 6.667px; height: 26.667px; border-radius: 1.667px; background: var(--black); }
+    .uptime-bars i.dip { background: var(--neutral-300); }
+    .slo-tag { height: 20px; padding: 0 6.667px; border-top: var(--hair) solid var(--neutral-300); }
+
+    .gauge { position: relative; width: 100%; height: 106.667px; flex-shrink: 0; }
+    .arc { position: absolute; top: 6.67px; left: 35px; height: 78.333px; }
+    .arc svg { position: absolute; width: auto; height: auto; overflow: visible; }
+    .arc-capacity { width: 156.667px; }
+    .arc-capacity svg { inset: -6.38% -3.19%; width: calc(100% + 6.38%); height: calc(100% + 12.76%); }
+    .arc-load { width: 111.683px; }
+    .arc-load svg { inset: -6.38% -4.48%; width: calc(100% + 8.96%); height: calc(100% + 12.76%); }
+    .gauge-value {
+      position: absolute; top: 46.67px; left: 113.33px;
+      width: 73.333px;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 26.667px; letter-spacing: -1.3333px;
+    }
+    .gauge-tick { position: absolute; top: 93.33px; font-family: var(--mono); font-size: 8.333px; letter-spacing: -0.4167px; line-height: normal; color: var(--neutral-500); }
+
+    .chart { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+    .chart, .chart-legend { font-family: var(--grotesk); }
+    .plot { position: relative; width: 100%; height: 121.667px; flex-shrink: 0; }
+    .plot p { position: absolute; top: 0; }
+    .y-axis { position: absolute; left: 0; top: 0; width: 31.667px; height: 105px; }
+    .x-axis { position: absolute; left: 31.67px; top: 108.33px; width: 378.333px; height: 13.333px; }
+    .bars {
+      position: absolute; left: 31.67px; top: 5.83px;
+      width: 378.333px; height: 100px;
+      overflow: hidden;
+      background: var(--white);
+    }
+    .bars .grid { position: absolute; left: 0; right: 0; height: 0.833px; background: var(--neutral-100); }
+    .bars .grid.base { background: var(--neutral-200); }
+    .bars .bar {
+      position: absolute;
+      bottom: 0.833px;              /* all bars sit on the 0 baseline (top + height = 99.17) */
+      width: 26.667px;
+      height: var(--h);
+      border-radius: 3.333px;
+      background: var(--ink);
+    }
+
+    /* Log feed */
+    .feed {
+      display: flex; flex-direction: column;
+      width: 100%;
+      overflow: hidden;
+      background: var(--white);
+      border: var(--hair) solid var(--neutral-200);
+      border-radius: 10px;
+    }
+    .feed-head { display: flex; align-items: center; justify-content: space-between; padding: 20px; }
+    .feed-tools { display: flex; align-items: center; gap: 13.333px; }
+    .trow {
+      display: flex; align-items: center; gap: 20px;
+      width: 100%;
+      padding: 0 20px;
+      border-bottom: var(--hair) solid var(--neutral-200);
+    }
+    .trow.th { height: 33.333px; border-top: var(--hair) solid var(--neutral-200); }
+    .trow.td { height: 53.333px; }
+    .c-time  { width: 120px; flex-shrink: 0; }
+    .c-id    { width: 133.333px; flex-shrink: 0; }
+    .c-event { flex: 1 0 0; min-width: 1px; }
+    .c-owner { width: 100px; flex-shrink: 0; }
+    .c-state { width: 86.667px; flex-shrink: 0; display: flex; }
+    .th p { font-weight: 500; font-size: 9.167px; letter-spacing: -0.4583px; line-height: normal; color: var(--neutral-500); white-space: nowrap; }
+    .td .cell { font-family: var(--mono); font-size: 9.167px; letter-spacing: -0.4583px; line-height: normal; white-space: nowrap; }
+    .event-title { font-weight: 500; font-size: 10px; letter-spacing: -0.5px; line-height: 1.5; }
+    .event-meta { font-family: var(--mono); font-size: 8.333px; letter-spacing: -0.4167px; line-height: 1.5; color: var(--neutral-500); }
+    .feed-foot { display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 20px; }
+    .pagination { display: flex; align-items: center; gap: 13.333px; }
+    .page-tag {
+      height: 20px; padding: 0 6.667px;
+      background: var(--black); color: var(--white);
+      border: var(--hair) solid var(--black);
+      font-family: var(--mono);
+    }
+    .provenance {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      width: 100%;
+      font-size: 9.167px; letter-spacing: -0.4583px; line-height: normal;
+      color: var(--neutral-500);
+      white-space: nowrap;
+    }
+
+    /* ───────────── Integrations (Figma 59:4888) ───────────── */
+    .integrations {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 80px 16px 60px;          /* Figma 60px top + 20px extra space below the hero */
+    }
+    .integrations-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 50px;
+      width: 100%;
+    }
+    .integrations-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 36px;
+      line-height: normal;
+      letter-spacing: -1.28px;
+      color: var(--black);
+      text-align: center;
+    }
+    .section-title .dim { color: var(--grayscale-500); }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 1280px;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      opacity: 0.4;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 16.2px;
+      line-height: normal;
+      letter-spacing: -0.648px;
+      color: var(--black);
+      white-space: nowrap;
+    }
+    .logo-mark { position: relative; flex-shrink: 0; width: 27px; height: 27px; overflow: hidden; }
+    .logo-mark > img { position: absolute; inset: 0; width: 100%; height: 100%; }
+    /* Slack mark is four exported groups positioned as in Figma */
+    .logo-mark .q { position: absolute; width: auto; height: auto; }
+    .logo-mark .q-bl { inset: 52.5% 52.5% 4.17% 4.17%; }
+    .logo-mark .q-tl { inset: 4.17% 52.5% 52.5% 4.17%; }
+    .logo-mark .q-tr { inset: 4.17% 4.17% 52.5% 52.5%; }
+    .logo-mark .q-br { inset: 52.5% 4.17% 4.17% 52.5%; }
+    .logo-mark .q img { display: block; width: 100%; height: 100%; }
+
+    .text-link {
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-top: 20px;                  /* Figma 50px gap + 20px extra below the carousel */
+      color: var(--grayscale-500);       /* rest: gray → ink on hover (motion.css) */
+    }
+    .text-link-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;                          /* underline sits 4px below the text */
+      font-family: var(--sans);
+      font-size: 18px;
+      line-height: normal;
+      letter-spacing: -0.54px;
+      white-space: nowrap;
+    }
+    /* Underline matches the text width: width 0 + min-width 100% means the
+       line never adds its own (fixed Figma) width to the label. */
+    .text-link-label img { width: 0; min-width: 100%; height: 0.5px; opacity: 0.2; }
+    .text-link-arrow { flex-shrink: 0; width: 20px; height: 20px; }
+    .text-link:focus-visible { outline: 2px solid var(--black); outline-offset: 4px; }
+
+    /* ───────────── Features (Figma 59:4889) ───────────── */
+    .features {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 100px;
+    }
+    .features-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+      width: 100%;
+      max-width: 1440px;
+      padding-inline: 80px;
+    }
+    .features-intro { padding-top: 100px; padding-bottom: 100px; }
+    .features-row > .spacer { flex: 1 1 0; }
+    .features-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      flex: 0 1 826px;
+      min-width: 0;
+    }
+    .features-title {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 48px;
+      line-height: 52px;
+      letter-spacing: -0.08em;          /* -3.84px @ 48px */
+      color: var(--black);
+    }
+    .features-title .dim { color: var(--grayscale-500); }
+    .features-lede,
+    .feature-info p {
+      font-family: var(--sans);
+      font-size: 22px;
+      line-height: 33px;
+      letter-spacing: -0.44px;
+      color: var(--grayscale-500);
+    }
+
+    .feature-tabs {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 25px;
+      flex: 1 1 0;
+      min-width: 0;
+      position: sticky;                 /* Vectura: nav pins 200px from the top */
+      top: 200px;
+      align-self: flex-start;
+      padding-top: 50px;
+    }
+    .feature-tab {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 24px;                  /* reduced from Figma 28px */
+      line-height: normal;
+      letter-spacing: -1.2px;
+      color: var(--grayscale-500);
+      text-align: left;
+      white-space: nowrap;
+      position: relative;
+      opacity: 0.7;                     /* inactive: gray at 70% */
+      --tab-icon: 28px;
+    }
+    .feature-tab:hover { color: var(--black); opacity: 1; }
+    .feature-tab[aria-current="true"] { color: var(--black); opacity: 1; }
+    .feature-tab:focus-visible { outline: 2px solid var(--black); outline-offset: 4px; }
+    /* Corner arrow: hidden + pulled under the label when inactive, so the label
+       sits flush left; on select it fades in and the label slides right. */
+    .feature-tab-icon {
+      flex-shrink: 0;
+      width: var(--tab-icon);
+      height: var(--tab-icon);
+      opacity: 0;
+      margin-right: calc(-1 * (var(--tab-icon) + 16px));
+    }
+    .feature-tab[aria-current="true"] .feature-tab-icon { opacity: 1; margin-right: 0; }
+    /* Cards stack and scroll past the sticky nav (136px apart, as on Vectura). */
+    .feature-visuals {
+      display: flex;
+      flex-direction: column;
+      gap: 136px;
+      flex: 0 1 826px;
+      min-width: 0;
+    }
+    .feature-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--white);
+      border: 0.5px solid #d4d4d4;
+      will-change: transform, opacity;  /* composited scroll fade/scale */
+    }
+    .feature-art {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 125px;
+      background: #fafafa;
+      overflow: hidden;
+    }
+    .feature-art > img,
+    .feature-art > svg { display: block; width: 455px; max-width: 100%; height: auto; }
+    .feature-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: 20px;
+      padding: 40px;
+      border-top: 0.5px solid #d4d4d4;
+    }
+    /* Card title: only shown once the tab list is hidden (stacked layout),
+       so each card says which feature it is. Same label + arrow as the
+       active tab (copy kept from Figma). */
+    .feature-name {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 400;
+      font-size: 24px;
+      line-height: normal;
+      letter-spacing: -0.05em;
+      color: var(--black);
+    }
+    .feature-name img { flex-shrink: 0; width: 26px; height: 26px; }
+    /* Arrow rests dimmed and turns black as the card becomes the active one
+       on scroll (motion.js sets .is-active), like the desktop tab arrow. */
+    .js .feature-name img { opacity: 0.2; }
+    .js .feature-panel.is-active .feature-name img { opacity: 1; }
+    /* Figma shows these links in ink with a full-strength underline. */
+    .text-link.is-ink { color: var(--black); }   /* underline stays at 20% → 100% on hover */
+
+    /* ───────────── Responsive ───────────── */
+    @media (max-width: 1100px) {
+      .features-row { padding-inline: 32px; }
+      .features-content { flex-direction: column; gap: 32px; }
+      .feature-tabs { display: none; }               /* each card carries its own title */
+      .feature-name { display: flex; }
+      .feature-visuals { gap: 64px; }
+      .feature-visuals { flex-basis: auto; }
+      .features-intro .spacer { display: none; }
+    }
+    @media (max-width: 1312px) {
+      /* The 1280px logo row no longer fits: wrap it into centered rows. */
+      .logo-row { flex-wrap: wrap; justify-content: center; gap: 24px 40px; }
+    }
+    /* Phones (Mobbin pattern): the mockup shows at a readable 60% scale
+       (layout script), left-aligned one gutter in and cropped by the right
+       edge of the screen. */
+    @media (max-width: 767px) {
+      .mockup-stage { align-self: flex-start; margin-left: 16px; }
+    }
+    @media (max-width: 900px) {
+      .hero { padding-top: 110px; }
+      .content-frame { gap: 96px; }
+      .hero-content { gap: 36px; }
+      .hero-title { font-size: clamp(34px, 7vw, 56px); }
+      .hero-sub { font-size: 18px; line-height: 27px; }
+      .section-title { font-size: clamp(26px, 5vw, 36px); }
+      .features-intro { padding-top: 64px; padding-bottom: 48px; }
+      .features-title { font-size: clamp(30px, 6vw, 48px); line-height: 1.1; }
+      .features-lede, .feature-info p { font-size: 18px; line-height: 27px; }
+      .feature-tab { font-size: 20px; }
+      .feature-tab { --tab-icon: 24px; }
+      .feature-art { padding: 10px 24px; }
+      .feature-info { padding: 24px; }
+      .feature-name { font-size: 20px; }
+      .feature-name img { width: 22px; height: 22px; }
+    }
+    @media (max-width: 480px) {
+      .features-row { padding-inline: 16px; }
+      .feature-tab { font-size: 16px; letter-spacing: -0.8px; }
+    }
+    @media (max-width: 480px) {
+      .logo-row { gap: 20px 28px; }
+      .logo { font-size: 14px; }
+      .logo-mark { width: 23px; height: 23px; }
+      .hero { padding-top: 88px; }
+      .content-frame { gap: 64px; }
+      .pill { font-size: 11px; padding: 10px 16px; white-space: normal; text-align: left; }
+      .hero-sub { font-size: 16px; line-height: 24px; }
+      .cta-row { width: 100%; }
+      .btn { flex: 1 1 100%; justify-content: center; }
+    }
+
+    /* ───────────── How it works (Figma 135:2539) ───────────── */
+    .how-it-works {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 50px;
+      padding: 100px 80px;
+    }
+    /* Faint grid: 32px cells (verticals offset 26px from the 1440 frame edge),
+       stone-300 @ 65%, under a white radial fade. Starts 35px above the section. */
+    .how-it-works::before {
+      content: "";
+      position: absolute;
+      inset: -35px 0 auto;
+      height: 627px;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 857.5px 347px at 50% 313.5px, rgb(255 255 255 / 0), var(--white)),
+        linear-gradient(to right, rgb(214 211 209 / 0.65) 1px, transparent 1px) calc(50% - 720px + 26px) 0 / 32px 100%,
+        linear-gradient(to bottom, rgb(214 211 209 / 0.65) 1px, transparent 1px) 0 0 / 100% 32px,
+        var(--bg-app);
+    }
+    /* Cursor spotlight: a darker copy of the same grid, revealed around the
+       mouse (mask + darker lines in motion.css, same as the hero). */
+    .hiw-spot {
+      inset: -35px 0 auto;
+      height: 627px;
+      z-index: -1;
+      background-position: calc(50% - 720px + 26px) 0, 0 0;
+      background-size: 32px 100%, 100% 32px;
+    }
+    .hiw-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      max-width: 880px;
+      text-align: center;
+    }
+    .hiw-title {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 48px;
+      line-height: 52px;
+      letter-spacing: -0.08em;          /* -3.84px @ 48px */
+      color: var(--black);
+    }
+    .hiw-title .dim { color: var(--grayscale-500); }
+    .hiw-word { display: inline-block; }
+    .hiw-lede {
+      margin: 0;
+      max-width: 680px;
+      font-size: 22px;
+      line-height: 33px;
+      letter-spacing: -0.44px;
+      color: var(--grayscale-500);
+    }
+    .hiw-steps {
+      display: flex;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .hiw-step {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      padding: 30px 20px;
+      background: var(--white);
+      border: 0.5px solid #d4d4d4;
+    }
+    .hiw-num {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 56px;
+      line-height: normal;
+      letter-spacing: -0.08em;          /* -4.48px @ 56px */
+      color: #d4d4d4;
+    }
+    .hiw-icon { display: block; width: 80px; height: 80px; overflow: hidden; }
+    .hiw-icon path {
+      fill: none;
+      stroke: #0f0f0f;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .hiw-icon .solid { fill: var(--white); }
+    .hiw-icon .ghost { opacity: 0.18; }
+    .hiw-text {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 150px;
+    }
+    .hiw-text h3 {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 28px;
+      line-height: normal;
+      letter-spacing: -0.08em;          /* -2.24px @ 28px */
+      color: var(--black);
+    }
+    .hiw-text p {
+      margin: 0;
+      font-size: 20px;
+      line-height: normal;
+      letter-spacing: -0.4px;
+      color: var(--grayscale-500);
+    }
+    @media (max-width: 1100px) {
+      .how-it-works { padding-inline: 32px; }
+      .hiw-text h3 { font-size: 24px; }
+      .hiw-text p { font-size: 18px; }
+    }
+    @media (max-width: 900px) {
+      .how-it-works { padding-block: 64px; gap: 40px; }
+      .hiw-title { font-size: clamp(30px, 6vw, 48px); line-height: 1.1; }
+      .hiw-lede { font-size: 18px; line-height: 27px; }
+      .hiw-steps { flex-direction: column; max-width: 560px; }
+      .hiw-text { min-height: 0; }
+    }
+    @media (max-width: 480px) {
+      .how-it-works { padding-inline: 16px; }
+      .hiw-step { gap: 20px; padding: 24px 16px; }
+      .hiw-num { font-size: 44px; }
+      .hiw-text p { font-size: 16px; }
+    }
+
+    /* ───────────── Why choose us (Figma 145:10162) ───────────── */
+    .why {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 50px;
+      padding: 150px 80px;
+    }
+    .why-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      max-width: 880px;
+      text-align: center;
+    }
+    .why-head .pill { color: var(--black); }
+    /* Compare card: [data-mode="old"] is the light Figma default,
+       [data-mode="baseline"] the dark Variant2. */
+    .why-compare {
+      --why-bg: var(--white);
+      --why-line: #d4d4d4;
+      --why-ink: var(--black);
+      --why-soft: var(--grayscale-500);
+      --why-reason: #262626;
+      --why-note: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      width: 100%;
+      max-width: 1280px;
+      padding: 40px 0;                  /* Figma bottom was 10px; matched to the top */
+      background: var(--why-bg);
+      border: 0.5px solid var(--why-line);
+      overflow: hidden;
+    }
+    .why-compare[data-mode="baseline"] {
+      --why-bg: var(--black);
+      --why-line: var(--black);
+      --why-ink: var(--white);
+      --why-soft: #e5e5e5;
+      --why-reason: var(--white);
+      --why-note: #f5f5f5;
+    }
+    .why-top {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding-inline: 40px;
+    }
+    .why-stat { flex: 1 1 0; min-width: 0; }
+    .why-eyebrow,
+    .why-stat-sub {
+      margin: 0;
+      font-size: 18px;
+      line-height: normal;
+      letter-spacing: -0.36px;
+      color: var(--why-soft);
+    }
+    .why-eyebrow { font-family: var(--mono); }
+    .why-stat-value {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 56px;
+      line-height: normal;
+      letter-spacing: -0.08em;          /* -4.48px @ 56px */
+      color: var(--why-ink);
+      white-space: nowrap;
+    }
+    /* Two states stacked in one grid cell, so swapping never shifts layout. */
+    .why-swap { display: inline-grid; }
+    .why-swap > * { grid-area: 1 / 1; }
+    .why-compare[data-mode="old"] .is-new,
+    .why-compare[data-mode="baseline"] .is-old { opacity: 0; visibility: hidden; }
+
+    .why-switch {
+      position: relative;
+      display: flex;
+      flex-shrink: 0;
+      padding: 10px;
+      border-radius: 51px;
+      background: #f5f5f5;
+    }
+    .why-compare[data-mode="baseline"] .why-switch { background: rgb(255 255 255 / 0.25); }
+    .why-thumb {
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: 10px;
+      width: 143px;
+      border-radius: 80px;
+      background: var(--black);
+    }
+    .why-compare[data-mode="baseline"] .why-thumb { transform: translateX(143px); background: var(--white); }
+    .why-option {
+      position: relative;
+      width: 143px;
+      padding: 16px 20px;
+      border: 0;
+      border-radius: 80px;
+      background: none;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 18px;
+      line-height: normal;
+      letter-spacing: -0.54px;
+      color: var(--black);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .why-option[aria-pressed="true"] { cursor: default; }
+    .why-compare[data-mode="old"] .why-option[data-mode="old"] { color: var(--white); }
+    .why-compare[data-mode="baseline"] .why-option[data-mode="old"] { color: #a3a3a3; }
+    .why-option:focus-visible { outline: 2px solid var(--grayscale-500); outline-offset: 2px; }
+
+    .why-rows { margin: 0; padding: 0; list-style: none; }
+    .why-row {
+      display: flex;
+      align-items: flex-start;
+      border-block: 0.5px solid #d4d4d4;
+    }
+    .why-compare[data-mode="baseline"] .why-row:first-child { border-top-color: #a3a3a3; }
+    .why-label {
+      flex: 0 0 554px;                  /* 40px inset + 514px Figma column */
+      padding: 40px 24px 40px 40px;
+      font-family: var(--mono);
+      font-size: 18px;
+      line-height: normal;
+      letter-spacing: -0.36px;
+      text-transform: uppercase;
+      color: var(--grayscale-500);
+    }
+    .why-reason {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      padding: 40px 40px 40px 0;
+    }
+    .why-icon { display: grid; flex-shrink: 0; width: 32px; height: 32px; }
+    .why-icon img { grid-area: 1 / 1; width: 32px; height: 32px; }
+    .why-reason-text {
+      flex: 1 1 0;
+      min-width: 0;
+      font-size: 24px;
+      line-height: normal;
+      letter-spacing: -0.48px;
+      color: var(--why-reason);
+    }
+    .why-reason-text .is-old {
+      text-decoration: line-through;
+      text-decoration-skip-ink: none;
+    }
+    .why-note {
+      margin: 0;
+      padding-inline: 100px;
+      font-family: var(--mono);
+      font-size: 20px;
+      line-height: 33px;
+      letter-spacing: -0.4px;
+      text-align: center;
+      color: var(--why-note);
+    }
+    /* Desktop: the whole card fits the viewport (40px breathing room top and
+       bottom). Only the rows' vertical padding gives — Figma's 40px on tall
+       screens, down to 14px on short laptops. ~550px is the card's fixed part. */
+    @media (min-width: 901px) {
+      .why-compare { --why-row-pad: clamp(14px, calc((100vh - 550px) / 10), 40px); }
+      .why-label { padding-block: var(--why-row-pad); }
+      .why-reason { padding-block: var(--why-row-pad); }
+    }
+    @media (max-width: 1100px) {
+      .why { padding-inline: 32px; }
+      .why-label { flex-basis: 40%; }
+    }
+    @media (max-width: 900px) {
+      .why { padding-block: 96px; gap: 40px; }
+      .why-title { font-size: clamp(30px, 6vw, 48px); line-height: 1.1; }
+      .why-top { flex-direction: column; align-items: flex-start; }
+      .why-stat-value { font-size: clamp(36px, 8vw, 56px); }
+      .why-row { flex-direction: column; }
+      .why-label { flex-basis: auto; padding: 24px 24px 8px 40px; font-size: 16px; }
+      .why-reason { padding: 0 24px 24px 40px; }
+      .why-reason-text { font-size: 20px; }
+      .why-note { padding-inline: 40px; font-size: 18px; line-height: 28px; }
+    }
+    @media (max-width: 480px) {
+      .why { padding-inline: 16px; }
+      .why-compare { padding-block: 24px; gap: 24px; }
+      .why-top { padding-inline: 16px; }
+      .why-stat-value { font-size: 32px; white-space: normal; }
+      .why-switch { align-self: stretch; }
+      .why-thumb { width: calc(50% - 10px); }
+      .why-compare[data-mode="baseline"] .why-thumb { transform: translateX(100%); }
+      .why-option { flex: 1 1 0; width: auto; padding-inline: 8px; font-size: 16px; }
+      .why-label { padding: 20px 16px 6px; font-size: 14px; }
+      .why-reason { padding: 0 16px 20px; }
+      .why-icon, .why-icon img { width: 24px; height: 24px; }
+      .why-reason-text { font-size: 18px; }
+      .why-note { padding-inline: 16px; font-size: 16px; line-height: 24px; }
+    }
+
+    /* ───────────── Trust badges (Figma 138:7800) ───────────── */
+    .trust {
+      position: relative;
+      z-index: 1;                       /* sits over How it works' grid overhang */
+      display: flex;
+      justify-content: center;
+      padding: 120px 80px;
+      background: var(--black);
+    }
+    .trust-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      width: 100%;
+      max-width: 1280px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .trust-stat {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+      min-width: 0;
+      position: relative;
+      padding: 50px 20px 50px 40px;
+      border-top: 0.5px solid var(--grayscale-500);
+    }
+    /* Accent bar: sits in the cell's top padding so the Figma layout is untouched. */
+    .trust-bar {
+      position: absolute;
+      top: 36px;
+      left: 40px;
+      width: 32px;
+      height: 2px;
+      background: var(--white);
+      transform-origin: left center;
+    }
+    .trust-stat + .trust-stat { border-left: 1px solid var(--grayscale-500); }   /* Figma: 0.5 + 0.5 */
+    .trust-value {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 64px;
+      line-height: normal;
+      letter-spacing: -0.06em;          /* -3.84px @ 64px */
+      color: var(--white);
+      white-space: nowrap;
+    }
+    .trust-count { display: inline-block; font-variant-numeric: tabular-nums; }
+    .trust-copy { display: flex; flex-direction: column; gap: 2px; }
+    .trust-label {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 18px;
+      line-height: normal;
+      letter-spacing: -0.08em;          /* -1.44px @ 18px */
+      color: var(--white);
+    }
+    .trust-note {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: normal;
+      letter-spacing: -0.28px;
+      color: var(--grayscale-500);
+    }
+    @media (max-width: 1312px) {
+      .trust-value { font-size: clamp(44px, 4.6vw, 64px); }
+    }
+    @media (max-width: 1100px) {
+      .trust { padding: 96px 32px; }
+      .trust-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .trust-stat:nth-child(odd) { border-left: 0; }
+      .trust-value { font-size: 56px; }
+    }
+    @media (max-width: 480px) {
+      .trust { padding: 64px 16px; }
+      .trust-stats { grid-template-columns: 1fr; }
+      .trust-stat { border-left: 0 !important; padding: 32px 16px; }
+      .trust-bar { top: 18px; left: 16px; }
+      .trust-value { font-size: 48px; }
+    }
+
+    /* ───────────── Testimonials (Figma 146:11357) ───────────── */
+    .tm {
+      position: relative;
+      isolation: isolate;
+      overflow: clip;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 50px;
+      padding: 80px;
+      background: var(--black);
+      color: var(--white);
+    }
+    /* Faint grid: 39.15px cells, stone-500 @ 65%, under a black radial fade;
+       Figma box 1325×767 at (413, 13.75) of the 1440 frame, behind the card. */
+    .tm::before {
+      content: "";
+      position: absolute;
+      top: 13.75px;
+      left: calc(50% - 720px + 413px);
+      width: 1858px;
+      height: 767px;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 1019px 450px at 929.7px 384.1px, rgb(0 0 0 / 0), var(--black)),
+        linear-gradient(to right, rgb(120 113 108 / 0.65) 1.2px, transparent 1.2px) 31.8px 0 / 39.15px 100%,
+        linear-gradient(to bottom, rgb(120 113 108 / 0.65) 1.2px, transparent 1.2px) 0 0 / 100% 39.15px;
+    }
+    /* Cursor spotlight (as in the hero): a brighter copy of the same grid,
+       revealed around the mouse; mask + fade timing come from motion.css. */
+    .tm-spot {
+      top: 13.75px;
+      left: calc(50% - 720px + 413px);
+      right: auto;
+      bottom: auto;
+      width: 1858px;
+      height: 767px;
+      z-index: -1;
+      background:
+        linear-gradient(to right, rgb(245 245 245 / 0.4) 1.2px, transparent 1.2px) 31.8px 0 / 39.15px 100%,
+        linear-gradient(to bottom, rgb(245 245 245 / 0.4) 1.2px, transparent 1.2px) 0 0 / 100% 39.15px;
+    }
+    .tm-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 880px;
+      text-align: center;
+    }
+    .tm-title { color: var(--white); }
+    .tm-lede {
+      margin: 0;
+      max-width: 680px;
+      font-size: 22px;
+      line-height: 33px;
+      letter-spacing: -0.44px;
+      color: #a3a3a3;
+    }
+    .tm-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 1280px;
+    }
+    .tm-row {
+      display: flex;
+      align-items: stretch;
+      gap: 189px;
+    }
+
+    /* Topic wheel: the active topic sits at 47% of a 447px window; Figma's
+       black gradient overlay becomes a mask (hidden ≤14.8%, clear at 45.3%,
+       hidden ≥78.5%). Items are placed by motion.js (circular offsets). */
+    /* The mask clips to the box, so the box runs 60px into the gap: the
+       active topic (scaled 1.11, semibold) — "Cutting alert noise" is ~420px
+       — never gets cut off. Negative margin keeps Figma's 404 + 189 layout. */
+    .tm-wheel {
+      position: relative;
+      flex: 0 0 464px;
+      margin-right: -60px;
+      align-self: center;
+      height: 447px;
+      margin-block: 0;
+      padding: 0;
+      list-style: none;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 14.765%, #000 45.253%, transparent 78.523%);
+              mask-image: linear-gradient(to bottom, transparent 14.765%, #000 45.253%, transparent 78.523%);
+    }
+    .tm-wheel li {
+      position: absolute;
+      left: 0;
+      top: calc(47% - 23px);
+      transform: translateY(calc(var(--d, 0) * 50px));
+    }
+    .tm-topic {
+      display: block;
+      padding: 0;
+      border: 0;
+      background: none;
+      font-family: var(--mono);
+      font-weight: 400;
+      font-size: 36px;
+      line-height: 46px;
+      letter-spacing: -0.05em;          /* -1.8px @ 36px */
+      color: var(--grayscale-500);
+      white-space: nowrap;
+      cursor: pointer;
+      transform-origin: left center;
+    }
+    .tm-topic[aria-current="true"] {
+      font-weight: 600;
+      color: var(--white);
+      transform: scale(1.111);          /* Figma 40px semibold vs 36px */
+      cursor: default;
+    }
+    .tm-topic:focus-visible { outline: 2px solid var(--grayscale-500); outline-offset: 4px; }
+
+    .tm-card {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 30px;
+      padding: 50px 40px;
+      background: var(--black);
+      border: 0.5px solid var(--grayscale-500);
+    }
+    .tm-count {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: normal;
+      letter-spacing: -0.28px;
+      color: var(--grayscale-500);
+    }
+    /* All six slides share one grid cell, so the card holds the tallest. */
+    .tm-slides { display: grid; }
+    .tm-slide {
+      grid-area: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      margin: 0;
+    }
+    .tm-slide:not(.is-active) { opacity: 0; visibility: hidden; }
+    /* Once the header has scrolled past, wheel + card + footer fit one screen:
+       the quote shrinks with viewport height (Figma 46px on tall screens).
+       ~364px is the card/footer's fixed part, 7.2 ≈ 6 lines × line-height. */
+    .tm-quote {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: clamp(28px, calc((100vh - 364px) / 7.2), 46px);
+      line-height: normal;
+      letter-spacing: -0.06em;          /* -2.76px @ 46px */
+      color: var(--white);
+    }
+    .tm-quote p { margin: 0; }
+    .tm-author {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: auto;
+    }
+    .tm-avatar {
+      width: 45px;
+      height: 45px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .tm-who { display: flex; flex-direction: column; gap: 6px; }
+    .tm-name {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 18px;
+      line-height: normal;
+      letter-spacing: -0.08em;          /* -1.44px @ 18px */
+      color: var(--white);
+    }
+    .tm-role {
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: normal;
+      letter-spacing: -0.28px;
+      color: var(--grayscale-500);
+    }
+    .tm-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .text-link.is-light { margin-top: 0; color: var(--white); }
+    .text-link.is-light .text-link-label img { opacity: 1; }
+    .text-link.is-light:focus-visible { outline-color: var(--white); }
+    .tm-arrows { display: flex; gap: 10px; }
+    .tm-arrow {
+      display: flex;
+      padding: 8px;
+      border: 0.5px solid #d4d4d4;
+      background: none;
+      cursor: pointer;
+    }
+    .tm-arrow img { width: 24px; height: 24px; }
+    .tm-arrow.is-prev img { transform: rotate(180deg); }
+    .tm-arrow:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
+
+    @media (max-width: 1312px) {
+      .tm-row { gap: clamp(40px, 10vw, 189px); }
+      .tm-quote { font-size: clamp(28px, min(3.2vw, calc((100vh - 364px) / 7.2)), 46px); }
+    }
+    @media (max-width: 1100px) {
+      .tm { padding: 80px 32px; }
+      .tm-row { flex-direction: column; gap: 24px; }
+      .tm-wheel { flex-basis: auto; align-self: stretch; margin-right: 0; height: clamp(120px, 22vh, 250px); }
+      .tm-quote { font-size: 32px; }
+    }
+    @media (max-width: 900px) {
+      .tm { padding-block: 64px; gap: 40px; }
+      .tm-title { font-size: clamp(30px, 6vw, 48px); line-height: 1.1; }
+      .tm-lede { font-size: 18px; line-height: 27px; }
+      .tm-topic { font-size: 28px; line-height: 36px; }
+      .tm-wheel li { top: calc(47% - 18px); transform: translateY(calc(var(--d, 0) * 40px)); }
+      .tm-card { padding: 32px 24px; }
+      .tm-quote { font-size: 26px; }
+    }
+    @media (max-width: 480px) {
+      .tm { padding-inline: 16px; }
+      .tm-topic { font-size: 22px; line-height: 30px; }
+      .tm-wheel { height: clamp(120px, 22vh, 200px); }
+      .tm-wheel li { top: calc(47% - 15px); transform: translateY(calc(var(--d, 0) * 34px)); }
+      .tm-card { padding: 24px 16px; gap: 20px; }
+      .tm-quote { font-size: clamp(18px, calc((100vh - 400px) / 14), 22px); }
+      .tm-foot .text-link-label { font-size: 16px; }
+    }
+
+    /* ───────────── Pricing (Figma 150:13344) ───────────── */
+    .pricing {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 50px;
+      padding: 150px 80px;
+    }
+    .price-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      max-width: 880px;
+      text-align: center;
+    }
+    .price-head .pill { color: var(--black); }
+    .price-copy { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .price-lede {
+      margin: 0;
+      max-width: 680px;
+      font-size: 22px;
+      line-height: 33px;
+      letter-spacing: -0.44px;
+      color: #525252;
+    }
+    /* Billing switch: the Why choose us switch, keyed on data-billing. */
+    .price-switch .why-option { display: inline-flex; align-items: baseline; justify-content: center; gap: 6px; }
+    .price-switch .why-option small { font-size: 12px; }
+    .pricing[data-billing="monthly"] .why-option[data-billing="monthly"],
+    .pricing[data-billing="annual"] .why-option[data-billing="annual"] { color: var(--white); }
+    .pricing[data-billing="annual"] .why-thumb { transform: translateX(143px); }
+
+    .price-plans {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .plan {
+      --plan-ink: var(--black);
+      --plan-soft: var(--grayscale-500);
+      --plan-stat: #404040;
+      --plan-feature: var(--grayscale-500);
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      min-width: 0;
+      padding: 50px 20px;
+      background: var(--white);
+      border: 0.5px solid #d4d4d4;
+      box-shadow: 2px 2px 15px 0 rgb(0 0 0 / 0.07);
+    }
+    .plan.is-featured {
+      --plan-ink: var(--white);
+      --plan-soft: #a3a3a3;
+      --plan-stat: var(--white);
+      --plan-feature: #f5f5f5;
+      background: var(--black);
+      box-shadow: none;
+    }
+    .plan-intro { display: flex; flex-direction: column; gap: 5px; }
+    .plan-name {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 30px;
+      line-height: normal;
+      letter-spacing: -0.06em;          /* -1.8px @ 30px */
+      color: var(--plan-ink);
+    }
+    .plan-tagline,
+    .plan-bill {
+      margin: 0;
+      line-height: normal;
+      color: var(--plan-soft);
+    }
+    .plan-tagline { font-size: 20px; letter-spacing: -0.4px; }
+    .plan-price { display: flex; flex-direction: column; gap: 3px; }
+    .plan-amount {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 56px;
+      line-height: normal;
+      letter-spacing: -0.05em;          /* -2.8px @ 56px */
+      color: var(--plan-ink);
+      white-space: nowrap;
+    }
+    .plan-amount .per { font-size: 24px; letter-spacing: -1.2px; }
+    .plan-num { display: inline-block; font-variant-numeric: tabular-nums; }
+    .plan-bill {
+      display: grid;                    /* monthly / annual notes share one cell */
+      font-family: var(--mono);
+      font-weight: 300;
+      font-size: 18px;
+      letter-spacing: -0.36px;
+    }
+    .plan-bill > * { grid-area: 1 / 1; }
+    .pricing[data-billing="monthly"] .plan-bill .is-annual,
+    .pricing[data-billing="annual"] .plan-bill .is-monthly { opacity: 0; visibility: hidden; }
+
+    .plan-stats { display: flex; margin: 0; }
+    .plan-stat {
+      position: relative;
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 15px 0;
+      border-block: 0.5px solid #d4d4d4;
+      white-space: nowrap;
+    }
+    /* Divider spans the text only, not the cell's 15px padding (Figma). */
+    .plan-stat:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 15px;
+      bottom: 15px;
+      right: 0;
+      border-right: 0.5px solid #d4d4d4;
+    }
+    .plan-stat dt,
+    .plan-stat dd { margin: 0; line-height: normal; }
+    .plan-stat dd {
+      order: -1;                        /* value above label, label stays the term */
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 24px;
+      letter-spacing: -0.08em;          /* -1.92px @ 24px */
+      color: var(--plan-stat);
+    }
+    .plan-stat dt {
+      font-family: var(--mono);
+      font-size: 14px;
+      letter-spacing: -0.28px;
+      color: var(--plan-soft);
+    }
+    .plan-features {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1 1 auto;                   /* pushes the buttons to one baseline */
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .plan-features li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      line-height: normal;
+      letter-spacing: -0.36px;
+      color: var(--plan-feature);
+    }
+    .plan-features img { flex-shrink: 0; width: 24px; height: 24px; }
+    .plan-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 25px 20px;
+      background: var(--white);
+      border: 0.5px solid var(--neutral-200);
+      box-shadow: 2px 2px 15px 0 rgb(0 0 0 / 0.07);
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 16px;
+      line-height: normal;
+      letter-spacing: -0.48px;
+      color: var(--black);
+      white-space: nowrap;
+    }
+    .plan-cta:focus-visible { outline: 2px solid var(--grayscale-500); outline-offset: 3px; }
+    .price-more { align-self: flex-end; width: 100%; max-width: 1280px; display: flex; justify-content: flex-end; }
+    .price-more .text-link { margin-top: 0; }
+
+    @media (max-width: 1100px) {
+      .pricing { padding-inline: 32px; }
+      .plan-amount { font-size: 44px; }
+    }
+    @media (max-width: 900px) {
+      .pricing { padding-block: 96px; gap: 40px; }
+      .price-title { font-size: clamp(30px, 6vw, 48px); line-height: 1.1; }
+      .price-lede { font-size: 18px; line-height: 27px; }
+      .price-plans { grid-template-columns: 1fr; max-width: 520px; gap: 16px; }
+      .plan { gap: 32px; padding: 40px 24px; }
+      .plan-amount { font-size: 56px; }
+      .price-more { justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .pricing { padding-inline: 16px; }
+      .price-switch { align-self: stretch; }
+      .price-switch .why-thumb { width: calc(50% - 10px); }
+      .pricing[data-billing="annual"] .price-switch .why-thumb { transform: translateX(100%); }
+      .price-switch .why-option { flex: 1 1 0; width: auto; padding-inline: 8px; font-size: 16px; }
+      .plan { padding: 32px 16px; }
+      .plan-name { font-size: 26px; }
+      .plan-amount { font-size: 44px; }
+      .plan-stat dd { font-size: 20px; }
+      .plan-features li { font-size: 16px; }
+    }
+
+    /* ───────────── Footer (Figma 153:19865) ───────────── */
+    .site-foot { background: var(--black); color: var(--white); overflow: clip; }
+
+    /* CTA block */
+    .foot-cta {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 50px;
+      padding: 120px 80px;
+    }
+    /* Faint grid: 33.58px cells (verticals offset 27.3px), stone-500 @ 65%,
+       under a black radial fade; Figma box 1547×658, centred, 20.67px up. */
+    .foot-cta::before,
+    .foot-spot {
+      content: "";
+      position: absolute;
+      top: -20.67px;
+      left: calc(50% - 773.5px);
+      width: 1547px;
+      height: 658px;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .foot-cta::before {
+      background:
+        radial-gradient(ellipse 851px 344px at 758.5px 329px, rgb(0 0 0 / 0), var(--black)),
+        linear-gradient(to right, rgb(120 113 108 / 0.65) 1.05px, transparent 1.05px) 27.29px 0 / 33.58px 100%,
+        linear-gradient(to bottom, rgb(120 113 108 / 0.65) 1.05px, transparent 1.05px) 0 0 / 100% 33.58px;
+    }
+    /* Cursor spotlight (as in the hero / testimonials). */
+    .foot-spot {
+      right: auto;
+      bottom: auto;
+      background:
+        linear-gradient(to right, rgb(245 245 245 / 0.4) 1.05px, transparent 1.05px) 27.29px 0 / 33.58px 100%,
+        linear-gradient(to bottom, rgb(245 245 245 / 0.4) 1.05px, transparent 1.05px) 0 0 / 100% 33.58px;
+    }
+    .foot-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .foot-copy .pill { color: var(--black); border: 0; }
+    .foot-text { display: flex; flex-direction: column; gap: 10px; max-width: 900px; }
+    .foot-title {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 56px;
+      line-height: normal;
+      letter-spacing: -0.06em;          /* -3.36px @ 56px */
+      color: var(--white);
+    }
+    .foot-sub {
+      margin: 0;
+      font-size: 22px;
+      line-height: 33px;
+      letter-spacing: -0.44px;
+      color: #d4d4d4;
+    }
+    .foot-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    /* Figma inverts the hero pair on black. */
+    .foot-actions .btn-primary {
+      background: var(--white);
+      color: var(--black);
+      border: 0.5px solid var(--neutral-200);
+      box-shadow: 2px 2px 15px 0 rgb(0 0 0 / 0.07);
+    }
+    .foot-actions .btn-primary .mark-bar { background: var(--black); }
+    .foot-actions .btn-primary .sweep { background: linear-gradient(to right, transparent, rgb(0 0 0 / 0.08), transparent); }
+    .foot-actions .btn-secondary {
+      background: var(--black);
+      color: var(--white);
+      border-color: #d4d4d4;
+      box-shadow: none;
+    }
+    .foot-actions .btn-secondary:hover { background: #171717; }
+    .foot-actions .btn:focus-visible { outline-color: var(--white); }
+
+    /* Links block */
+    .foot-links {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 150px 80px 60px;         /* Figma's bottom 150 held the arm; the strip follows now */
+    }
+    .foot-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding-bottom: 60px;
+      border-bottom: 0.5px solid #d4d4d4;
+    }
+    .foot-brand { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+    .foot-logo { display: inline-flex; align-items: center; gap: 9.677px; height: 38.707px; color: var(--white); }
+    .foot-logo-mark {
+      display: grid;
+      place-items: center;
+      width: 30.965px;
+      height: 30.965px;
+      background: var(--white);
+    }
+    .foot-logo-mark i { display: block; width: 8.709px; height: 17.418px; background: var(--black); }
+    .foot-logo-id { display: flex; flex-direction: column; justify-content: space-between; height: 100%; white-space: nowrap; }
+    .foot-logo-name {
+      font-family: var(--inter);
+      font-weight: 700;
+      font-size: 19.353px;
+      line-height: normal;
+      letter-spacing: -0.9677px;
+    }
+    .foot-logo-tag {
+      font-size: 9.677px;
+      line-height: 1.5;
+      letter-spacing: -0.4838px;
+      color: #d4d4d4;
+    }
+    .foot-desc,
+    .foot-col h3,
+    .foot-legal {
+      margin: 0;
+      font-family: var(--mono);
+      font-weight: 300;
+      line-height: normal;
+      color: var(--grayscale-500);
+    }
+    .foot-desc { font-size: 18px; letter-spacing: -0.36px; max-width: 300px; }
+    .foot-col { display: flex; flex-direction: column; gap: 10px; padding: 0 50px 20px; white-space: nowrap; }
+    .foot-col h3 { font-size: 16px; letter-spacing: -0.32px; }
+    .foot-col ul { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .foot-col a { font-size: 20px; line-height: normal; color: #d4d4d4; }
+    .foot-col a:focus-visible,
+    .foot-social a:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+    .foot-bottom { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+    .foot-legal { font-size: 16px; letter-spacing: -0.32px; }
+    .foot-social { display: flex; align-items: center; gap: 39px; margin: 0; padding: 0; list-style: none; }
+    .foot-social a { display: block; }
+    .foot-social img { display: block; width: 20px; height: 20px; }
+
+    /* Robot arm divider (spec §3): full-bleed strip; motion.js sizes the
+       viewBox to the strip width and draws every frame. */
+    .robot-strip { height: 132px; }
+    .robot-svg { display: block; width: 100%; height: 132px; }
+    @media (max-width: 1100px) {
+      .foot-cta { padding-inline: 32px; }
+      .foot-links { padding-inline: 32px; }
+      .foot-main { flex-wrap: wrap; row-gap: 40px; }
+      .foot-brand { flex-basis: 100%; }
+      .foot-col { padding: 0 40px 0 0; }
+    }
+    @media (max-width: 900px) {
+      .foot-cta { padding-block: 96px; gap: 40px; }
+      .foot-title { font-size: clamp(34px, 7vw, 56px); }
+      .foot-sub { font-size: 18px; line-height: 27px; }
+      .foot-links { padding-block: 96px 48px; }
+      .foot-main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 24px; }
+      .foot-brand { grid-column: 1 / -1; }
+      .foot-col { padding: 0; }
+      .foot-bottom { flex-direction: column-reverse; gap: 24px; }
+    }
+    @media (max-width: 480px) {
+      .foot-cta,
+      .foot-links { padding-inline: 16px; }
+      .foot-actions { width: 100%; }
+      .foot-actions .btn { flex: 1 1 100%; justify-content: center; }
+      .foot-col a { font-size: 18px; }
+    }
+
+    /* ───────────── Nav bar (Figma 157:20251) ───────────── */
+    html { scroll-padding-top: 94px; }          /* anchors land below the sticky bar */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: center;
+      padding: 20px 0;
+      background: rgb(255 255 255 / 0.88);
+      -webkit-backdrop-filter: blur(12px);
+              backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid #d4d4d4;
+    }
+    .topnav-inner {
+      flex: 1 1 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      max-width: 1440px;
+      padding-inline: 40px;
+    }
+    .topnav-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--black); }
+    .topnav-brand-mark {
+      display: grid;
+      place-items: center;
+      width: 30.965px;
+      height: 30.965px;
+      background: var(--black);
+    }
+    .topnav-brand-mark i { display: block; width: 8.709px; height: 17.418px; background: var(--white); }
+    .topnav-brand-name {
+      font-family: var(--inter);
+      font-weight: 700;
+      font-size: 19.353px;
+      line-height: normal;
+      letter-spacing: -0.9677px;
+    }
+    .topnav-right { display: flex; align-items: center; gap: 50px; }
+    .topnav-links { display: flex; gap: 40px; margin: 0; padding: 0; list-style: none; }
+    .topnav-links a {
+      display: block;
+      font-family: var(--mono);
+      font-size: 16px;
+      line-height: normal;
+      letter-spacing: -0.05em;          /* -0.8px @ 16px */
+      color: #525252;
+      white-space: nowrap;
+    }
+    .topnav-links a:focus-visible,
+    .topnav-brand:focus-visible { outline: 2px solid var(--black); outline-offset: 4px; }
+    /* Burger (phones/tablets only): two 22×1.5px lines that cross into an ✕. */
+    .topnav-burger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      width: 44px;
+      height: 44px;
+      margin-right: -10px;              /* optical: lines align with the gutter */
+      padding: 0 11px;
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+    .topnav-burger span { display: block; height: 1.5px; background: var(--black); }
+    .site-nav.is-open .topnav-burger span:first-child { transform: translateY(3.75px) rotate(45deg); }
+    .site-nav.is-open .topnav-burger span:last-child { transform: translateY(-3.75px) rotate(-45deg); }
+    .topnav-burger:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+    @media (max-width: 900px) {
+      .topnav-inner { padding-inline: 24px; }
+      .topnav-burger { display: flex; }
+      /* The links + Contact Sales become a full-screen sheet under the bar:
+         it unrolls downward (clip-path) to the bottom of the viewport. */
+      .topnav-right {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: calc(100dvh - 100%);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 32px;
+        padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+        background: var(--white);
+        visibility: hidden;
+        clip-path: inset(0 0 100% 0);
+      }
+      .site-nav.is-open .topnav-right { visibility: visible; clip-path: inset(0 0 0 0); }
+      .topnav-right .btn { flex: 0 0 auto; margin-top: auto; }   /* Contact Sales sits at the bottom; beats the hero's phone-width .btn { flex: 1 1 100% } */
+      .topnav-links { gap: 24px; }
+      .topnav-links a { font-size: 32px; letter-spacing: -0.06em; }
+      /* No page scroll behind the sheet. Lock on body, not html: body already
+         sets overflow-x, and overflow on html would make body its own
+         scroller and unstick the bar. */
+      html.menu-open body { overflow: hidden; }
+      .topnav-links { flex-direction: column; }
+      .topnav-links a { color: var(--black); }
+      .topnav-right .btn { justify-content: center; padding-block: 18px; }
+    }
+    @media (max-width: 480px) {
+      .site-nav { padding: 14px 0; }
+      html { scroll-padding-top: 76px; }
+      .topnav-inner { padding-inline: 16px; }
+      .topnav-right { padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═════════════ Nav bar (Figma 157:20251) ═════════════
+     Sticky, translucent white with blur. Motion: drops in on load; links use
+     the footer's text roll + #525252 → black; Contact Sales is the hero's
+     primary button (scale + light sweep on hover). ≤900px: links + Contact
+     Sales move into a full-screen sheet opened by the burger (lines cross into ✕). -->
+<header class="site-nav" id="top">
+  <div class="topnav-inner">
+    <a class="topnav-brand" href="#top" aria-label="BaseLine home">
+      <span class="topnav-brand-mark" aria-hidden="true"><i></i></span>
+      <span class="topnav-brand-name" aria-hidden="true">BASELINE</span>
+    </a>
+    <button class="topnav-burger" type="button" aria-expanded="false" aria-controls="topnav-menu" aria-label="Open menu">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </button>
+    <nav class="topnav-right" id="topnav-menu" aria-label="Primary">
+      <ul class="topnav-links">
+        <li><a href="#platform">Platform</a></li>
+        <li><a href="#integrations">Integrations</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#docs">Docs</a></li>
+      </ul>
+      <a class="btn btn-primary" href="#sales">
+        <span class="sweep" aria-hidden="true"></span>
+        Contact Sales
+      </a>
+    </nav>
+  </div>
+</header>
+
+<!--
+  HERO MOTION MAP — keyframes + timings live in motion.css, behaviour in motion.js.
+  Load + hover motion runs once and holds; the mockup panel replays each time
+  it scrolls back into view; the two ambient loops run forever. Under
+  prefers-reduced-motion every element renders in its final state instantly.
+
+  Animation               Element(s)                         Trigger
+  ──────────────────────  ─────────────────────────────────  ─────────────────────────────────────────
+  rise (blur fade-up)     .pill / .hero-sub / .cta-row        page load, delays 0 / 160 / 240ms
+  dither reveal           h1 characters                       page load, 80ms delay; block glyphs scramble,
+                                                              then resolve left → right (~1.6s total)
+  blink (cursor snap)     h1 .period                          after the dither reveal (~1.73s), 2 blinks then on
+  grid-drift  [loop]      .grid-layer + .grid-spot grids      page load, 1 cell per 16s, linear
+  live values [loop]      .pill [data-live] numbers           every 2.6s after the H1 settles; changed digits
+                                                              dither-scramble, then resolve
+  cursor spotlight        #grid-spot                          pointermove (mouse only) inside .hero
+  primary hover/press     .btn-primary + .sweep               :hover (scale 1.03 + light sweep), :active
+  secondary hover         .btn-secondary                      :hover (lightest-neutral fill)
+  focus ring              .btn                                :focus-visible
+  scroll reveal           #mockup-reveal                      scroll / resize (progress 0 → 1)
+  ── mockup, all fired by one boolean: on at progress > 0.5, rewind below 0.4 or off-screen ──
+  count-up                #uptime-value                       active, 1400ms, ease 1-(1-t)^4
+  bar grow                .uptime-bars i, .bars .bar          active, 500ms, index * 24ms
+  arc draw                .arc-load path                      active, 1400ms stroke-dashoffset
+  live feed (feed-in)     log rows                            active, new row every 3.6s (pauses when off)
+  id flash                .sid on Critical rows               active (existing rows) / on insert
+-->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="grid-layer"><div class="hero-grid"></div></div>
+    <div class="hero-fade"></div>
+    <div class="grid-spot" id="grid-spot"><div class="hero-grid"></div></div>
+  </div>
+
+  <div class="content-frame">
+    <div class="hero-content">
+      <div class="hero-copy">
+        <div class="pill rise rise-1">
+          <span class="mark-bar" aria-hidden="true"></span>
+          <p><span data-live="nodes">2,418</span> edge nodes reporting · p99 alert latency <span data-live="latency">1.8</span>s</p>
+        </div>
+        <div class="hero-text">
+          <h1 class="hero-title" id="hero-title" data-dither>The autonomous control plane for enterprise IT<span class="period">.</span></h1>
+          <p class="hero-sub rise rise-3">Correlate automated log analysis with predictive telemetry. Catch edge node failures, maintain network redundancy, and resolve critical alerts before they impact production.</p>
+        </div>
+      </div>
+
+      <div class="cta-row rise rise-4">
+        <a class="btn btn-primary" href="#deploy">
+          <span class="sweep" aria-hidden="true"></span>
+          <span class="mark-bar" aria-hidden="true"></span>
+          Deploy Baseline
+        </a>
+        <a class="btn btn-secondary" href="#docs">View Documentation</a>
+      </div>
+    </div>
+
+    <!-- Product mockup -->
+    <div class="mockup-stage" id="mockup-stage">
+      <div class="mockup-reveal" id="mockup-reveal">
+      <div class="mockup-frame" id="mockup-frame" role="img" aria-label="Baseline operations dashboard showing 99.98% uptime, 64% failover link utilization, a 12 minute incident resolution time and an automated log feed.">
+        <div class="mockup" id="mockup" aria-hidden="true">
+
+          <!-- Navigation sidebar -->
+          <aside class="sidebar">
+            <div class="brand">
+              <div class="brand-mark"><span></span></div>
+              <div class="brand-id">
+                <p class="brand-name">BASELINE</p>
+                <p class="brand-sub">Enterprise control plane</p>
+              </div>
+            </div>
+
+            <div class="nav-groups">
+              <div class="nav-group">
+                <p class="t-label muted nowrap">OPERATIONS</p>
+                <div class="nav-links">
+                  <div class="nav-item active"><span class="ico"><img src="assets/01-hero/icons/layout-dashboard.svg" alt=""></span><p>Overview</p></div>
+                  <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/server.svg" alt=""></span><p>Infrastructure</p></div>
+                  <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/triangle-alert.svg" alt=""></span><p>Incidents</p><span class="count">02</span></div>
+                  <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/terminal.svg" alt=""></span><p>Log explorer</p></div>
+                  <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/network.svg" alt=""></span><p>Network topology</p></div>
+                </div>
+              </div>
+              <div class="nav-group">
+                <p class="t-label muted nowrap">AUTOMATION</p>
+                <div class="nav-links">
+                  <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/workflow.svg" alt=""></span><p>AIOps policies</p></div>
+                  <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/layers.svg" alt=""></span><p>Asset inventory</p></div>
+                  <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/plug.svg" alt=""></span><p>Integrations</p></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-spacer"></div>
+
+            <div class="workspace-status">
+              <p class="t-label nowrap">SANDBOX WORKSPACE</p>
+              <p class="t-body muted">128 monitored endpoints 3 regions · 12 edge nodes</p>
+              <span class="tag">Demo environment</span>
+            </div>
+
+            <div class="nav-links">
+              <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/settings.svg" alt=""></span><p>Settings</p></div>
+              <div class="nav-item"><span class="ico"><img src="assets/01-hero/icons/book-open.svg" alt=""></span><p>Documentation</p></div>
+            </div>
+
+            <div class="operator">
+              <div class="avatar"><img src="assets/01-hero/icons/avatar.jpg" alt=""></div>
+              <div class="operator-id">
+                <p style="font-size:10px; letter-spacing:-0.5px">Alex Timothy</p>
+                <p class="muted" style="font-size:8.333px; letter-spacing:-0.4167px">System administrator</p>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Operations workspace -->
+          <div class="workspace">
+            <header class="utility-header">
+              <div class="breadcrumb">
+                <p class="t-body muted">Workspace</p>
+                <span class="ico"><img src="assets/01-hero/icons/chevron-right.svg" alt=""></span>
+                <p class="t-body medium">Operations overview</p>
+              </div>
+              <div class="utility-actions">
+                <div class="search">
+                  <span class="ico"><img src="assets/01-hero/icons/search.svg" alt=""></span>
+                  <p class="t-body muted">Search infrastructure</p>
+                  <p class="t-label muted mono">⌘ K</p>
+                </div>
+                <span class="ico"><img src="assets/01-hero/icons/circle-help.svg" alt=""></span>
+                <span class="ico"><img src="assets/01-hero/icons/bell.svg" alt=""></span>
+                <span class="divider"></span>
+                <p class="t-small mono nowrap">ORG / ACME-IT</p>
+              </div>
+            </header>
+
+            <div class="dash">
+              <div class="dash-overview">
+                <div class="row-between">
+                  <div class="nowrap">
+                    <p class="page-title">Infrastructure overview</p>
+                    <p class="t-body muted">Availability, incident response and autonomous operations across your estate.</p>
+                  </div>
+                  <div class="control">
+                    <span class="ico"><img src="assets/01-hero/icons/download.svg" alt=""></span>
+                    Export snapshot
+                  </div>
+                </div>
+
+                <div class="row-between">
+                  <div class="filters">
+                    <div class="control tight">
+                      <span class="ico"><img src="assets/01-hero/icons/server-dark.svg" alt=""></span>
+                      Demo environment
+                      <span class="ico"><img src="assets/01-hero/icons/chevron-down.svg" alt=""></span>
+                    </div>
+                    <div class="control tight">
+                      <span class="ico"><img src="assets/01-hero/icons/globe.svg" alt=""></span>
+                      All regions
+                      <span class="ico"><img src="assets/01-hero/icons/chevron-down.svg" alt=""></span>
+                    </div>
+                    <div class="control tight">
+                      <span class="ico"><img src="assets/01-hero/icons/calendar-days.svg" alt=""></span>
+                      Last 24 hours
+                      <span class="ico"><img src="assets/01-hero/icons/chevron-down.svg" alt=""></span>
+                    </div>
+                  </div>
+                  <div class="snapshot">
+                    <p class="t-small muted mono nowrap">02 Oct 09:00 → 03 Oct 09:00 UTC</p>
+                    <div class="control dark">
+                      <span class="ico"><img src="assets/01-hero/icons/refresh-cw.svg" alt=""></span>
+                      Refresh
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Operational metrics -->
+              <div class="metrics">
+                <!-- Global uptime -->
+                <div class="card card-uptime">
+                  <div class="row-between">
+                    <p class="card-title">Global Uptime</p>
+                    <span class="ico"><img src="assets/01-hero/icons/activity.svg" alt=""></span>
+                  </div>
+                  <div class="stack" style="gap:6.667px">
+                    <p class="big-num" id="uptime-value" data-to="99.98" data-from="97.40" style="font-size:33.333px; letter-spacing:-1.6667px">99.98%</p>
+                    <p class="t-small muted nowrap">Time-weighted availability · 24h</p>
+                  </div>
+                  <div class="uptime-bars">
+                    <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i class="dip" style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i><i style="--i:12"></i><i style="--i:13"></i>
+                  </div>
+                  <div class="row-between" style="align-items:flex-start">
+                    <p class="t-small muted mono nowrap">SLO ≥ 99.95%</p>
+                    <span class="tag slo-tag">Within SLO</span>
+                  </div>
+                  <div class="card-detail t-small">
+                    <p class="muted">17s cumulative interruption</p>
+                    <p>128 endpoints · 3 regions</p>
+                  </div>
+                </div>
+
+                <!-- Network redundancy -->
+                <div class="card card-network">
+                  <div class="row-between">
+                    <p class="card-title">Network Redundancy</p>
+                    <span class="ico"><img src="assets/01-hero/icons/network-1.svg" alt=""></span>
+                  </div>
+                  <div class="gauge">
+                    <!-- Arc paths are the exported Figma vectors (assets/01-hero/icons/capacity-arc.svg, load-arc.svg), inlined so the load arc can draw in. -->
+                    <div class="arc arc-capacity">
+                      <svg preserveAspectRatio="none" viewBox="0 0 166.667 88.3333" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 83.3333C5 62.558 13.253 42.6337 27.9433 27.9433C42.6337 13.253 62.558 5 83.3333 5C104.109 5 124.033 13.253 138.723 27.9433C153.414 42.6337 161.667 62.558 161.667 83.3333" pathLength="1" stroke="#E5E7EB" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 1"/></svg>
+                    </div>
+                    <div class="arc arc-load">
+                      <svg preserveAspectRatio="none" viewBox="0 0 121.685 88.3333" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 83.3333C5.00074 70.1388 8.33401 57.1583 14.6905 45.596C21.0471 34.0338 30.2209 24.2645 41.3608 17.1946C52.5008 10.1248 65.2459 5.98335 78.4136 5.15467C91.5813 4.32599 104.745 6.83688 116.683 12.4544" pathLength="1" stroke="black" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 1"/></svg>
+                    </div>
+                    <p class="big-num gauge-value">64%</p>
+                    <p class="gauge-tick" style="left:33.33px">0</p>
+                    <p class="gauge-tick" style="left:180px">100%</p>
+                  </div>
+                  <div class="row-between t-small nowrap" style="align-items:flex-start">
+                    <p class="muted">Failover link utilization</p>
+                    <p class="mono medium">6.4 / 10 Gbps</p>
+                  </div>
+                  <div class="card-detail t-small">
+                    <p>Dual 10 Gbps uplinks · N+1 ready</p>
+                    <p class="muted">3.6 Gbps headroom after link failure</p>
+                  </div>
+                </div>
+
+                <!-- Incident resolution time -->
+                <div class="card card-incidents">
+                  <div class="row-between nowrap">
+                    <p class="card-title">Incident Resolution Time</p>
+                    <p class="t-small muted mono">Last 7 days · UTC · minutes</p>
+                  </div>
+                  <div class="nowrap" style="display:flex; align-items:baseline; gap:13.333px">
+                    <p class="big-num" style="font-size:26.667px; letter-spacing:-1.3333px">12 min</p>
+                    <p class="t-small muted">Latest resolution time</p>
+                  </div>
+                  <div class="chart">
+                    <div class="row-between t-label nowrap">
+                      <p class="muted">Average resolution time · last 7 days</p>
+                      <p class="faint">Sample data · minutes</p>
+                    </div>
+                    <div class="plot t-label faint nowrap">
+                      <div class="y-axis">
+                        <p style="left:0; top:0">30</p>
+                        <p style="left:0; top:33.33px">20</p>
+                        <p style="left:0; top:66.67px">10</p>
+                        <p style="left:0; top:100px">0</p>
+                      </div>
+                      <div class="bars">
+                        <span class="grid" style="top:0"></span>
+                        <span class="grid" style="top:33.33px"></span>
+                        <span class="grid" style="top:66.67px"></span>
+                        <span class="grid base" style="top:99.17px"></span>
+                        <span class="bar" style="left:13.69px; --h:92.556px; --i:0"></span>
+                        <span class="bar" style="left:67.74px; --h:79.333px; --i:1"></span>
+                        <span class="bar" style="left:121.79px; --h:89.25px; --i:2"></span>
+                        <span class="bar" style="left:175.83px; --h:59.5px; --i:3"></span>
+                        <span class="bar" style="left:229.88px; --h:66.111px; --i:4"></span>
+                        <span class="bar" style="left:283.93px; --h:46.278px; --i:5"></span>
+                        <span class="bar" style="left:337.98px; --h:39.667px; --i:6"></span>
+                      </div>
+                      <div class="x-axis">
+                        <p style="left:18.69px">Mon</p>
+                        <p style="left:73.99px">Tue</p>
+                        <p style="left:126.79px">Wed</p>
+                        <p style="left:181.67px">Thu</p>
+                        <p style="left:238.63px">Fri</p>
+                        <p style="left:290.6px">Sat</p>
+                        <p style="left:343.81px">Sun</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="chart-legend t-label muted nowrap" style="display:flex; gap:13.333px">
+                    <p>42 resolved incidents · last 24 h</p>
+                    <p>Target ≤ 20 min</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Automated log feed -->
+              <div class="feed">
+                <div class="feed-head">
+                  <div class="stack nowrap" style="gap:6.667px; width:auto">
+                    <p style="font-size:13.333px; letter-spacing:-0.6667px; line-height:1.5">Automated Log Feed</p>
+                    <p class="t-small muted">Correlated system events · UTC · most recent first</p>
+                  </div>
+                  <div class="feed-tools">
+                    <span class="badge critical">2 Critical</span>
+                    <div class="control">
+                      All statuses
+                      <span class="ico"><img src="assets/01-hero/icons/chevron-down.svg" alt=""></span>
+                    </div>
+                    <div class="control">
+                      <span class="ico"><img src="assets/01-hero/icons/arrow-up-right.svg" alt=""></span>
+                      Open explorer
+                    </div>
+                  </div>
+                </div>
+
+                <div class="trow th">
+                  <div class="c-time"><p class="mono">Timestamp</p></div>
+                  <div class="c-id"><p class="mono">Server ID</p></div>
+                  <div class="c-event"><p>Event Log</p></div>
+                  <div class="c-owner"><p>Assigned owner</p></div>
+                  <div class="c-state"><p>Status</p></div>
+                </div>
+
+                <div class="trow td">
+                  <p class="c-time cell">08:59:42.108</p>
+                  <p class="c-id cell"><span class="sid">app-use1-03</span></p>
+                  <div class="c-event"><p class="event-title">Memory leak detected</p><p class="event-meta">RSS 7.6 / 8.0 GiB · process java:2841 · INC-2048</p></div>
+                  <p class="c-owner cell muted">Maya Chen</p>
+                  <div class="c-state"><span class="badge critical">Critical</span></div>
+                </div>
+                <div class="trow td">
+                  <p class="c-time cell">08:58:16.402</p>
+                  <p class="c-id cell"><span class="sid">edge-euw1-04</span></p>
+                  <div class="c-event"><p class="event-title">OS patch baseline behind target</p><p class="event-meta">Ubuntu 24.04 · installed 2026.08 · target 2026.09</p></div>
+                  <p class="c-owner cell muted">Noah Patel</p>
+                  <div class="c-state"><span class="badge critical">Critical</span></div>
+                </div>
+                <div class="trow td">
+                  <p class="c-time cell">08:57:03.821</p>
+                  <p class="c-id cell"><span class="sid">net-use1-02</span></p>
+                  <div class="c-event"><p class="event-title">Redundant uplink health check passed</p><p class="event-meta">10 Gbps standby available · failover probe 14 ms</p></div>
+                  <p class="c-owner cell muted">Priya Shah</p>
+                  <div class="c-state"><span class="badge healthy">Healthy</span></div>
+                </div>
+                <div class="trow td">
+                  <p class="c-time cell">08:55:28.016</p>
+                  <p class="c-id cell"><span class="sid">db-use1-01</span></p>
+                  <div class="c-event"><p class="event-title">Replica synchronization complete</p><p class="event-meta">Replication lag 0.2s · consistency check passed</p></div>
+                  <p class="c-owner cell muted">Leo Kim</p>
+                  <div class="c-state"><span class="badge healthy">Healthy</span></div>
+                </div>
+                <div class="trow td">
+                  <p class="c-time cell">08:53:41.992</p>
+                  <p class="c-id cell"><span class="sid">app-aps1-02</span></p>
+                  <div class="c-event"><p class="event-title">Autoscaling policy executed</p><p class="event-meta">Worker pool 6 → 8 instances · CPU normalized to 48%</p></div>
+                  <p class="c-owner cell muted">Ava Brooks</p>
+                  <div class="c-state"><span class="badge healthy">Healthy</span></div>
+                </div>
+
+                <div class="feed-foot">
+                  <p class="t-small muted nowrap">Showing 5 of <span id="feed-total">1,284</span> events in the selected window</p>
+                  <div class="pagination">
+                    <p class="t-small muted mono nowrap">Page 1 of <span id="feed-pages">257</span></p>
+                    <span class="ico"><img src="assets/01-hero/icons/chevron-left.svg" alt=""></span>
+                    <span class="tag page-tag">1</span>
+                    <span class="ico"><img src="assets/01-hero/icons/chevron-right-1.svg" alt=""></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="provenance">
+                <p>DEMO ENVIRONMENT · Illustrative telemetry only. No production systems connected.</p>
+                <p class="mono">Snapshot 03 Oct 2026 · 09:00 UTC</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mockup-fade"></div>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!--
+  Integrations (Figma 59:4888) — motion in motion.css / motion.js
+  rise          pill / h2 / logo carousel / link   section 35% visible (once), 0/80/160/240ms
+  carousel      .logo-row → .logo-marquee           rAF loop, 80px/s (27px/s reduced motion);
+                                                    glides to a stop on hover, touch or focus
+  logo hover    .logo + .logo-tag                   others dim to 20%, hovered → 100% + 2px lift,
+                                                    category pill fades/slides in
+  link hover    .text-link                          gray → ink, underline 20% → 100%, arrow +4px
+-->
+<section class="integrations" id="integrations" aria-labelledby="integrations-title">
+  <div class="integrations-content">
+    <div class="integrations-head">
+      <div class="pill reveal reveal-1">
+        <span class="mark-bar" aria-hidden="true"></span>
+        <p>INTEGRATIONS</p>
+      </div>
+      <h2 class="section-title reveal reveal-2" id="integrations-title">Plugs into the stack <span class="dim">you already run.</span></h2>
+    </div>
+
+    <ul class="logo-row reveal reveal-3" role="list" data-carousel>
+      <li class="logo">
+        <span class="logo-mark">
+          <span class="q q-bl"><img src="assets/02-plugins-integration/icons/slack-1.svg" alt=""></span>
+          <span class="q q-tl"><img src="assets/02-plugins-integration/icons/slack-2.svg" alt=""></span>
+          <span class="q q-tr"><img src="assets/02-plugins-integration/icons/slack-3.svg" alt=""></span>
+          <span class="q q-br"><img src="assets/02-plugins-integration/icons/slack-4.svg" alt=""></span>
+        </span>
+        Slack
+        <span class="logo-tag" aria-hidden="true">Chat</span>
+      </li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/zapier.svg" alt=""></span>Zapier<span class="logo-tag" aria-hidden="true">Automation</span></li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/n8n.svg" alt=""></span>n8n<span class="logo-tag" aria-hidden="true">Workflows</span></li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/pagerduty.svg" alt=""></span>PagerDuty<span class="logo-tag" aria-hidden="true">Incident response</span></li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/docker.svg" alt=""></span>Docker<span class="logo-tag" aria-hidden="true">Containers</span></li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/datadog.svg" alt=""></span>Datadog<span class="logo-tag" aria-hidden="true">Monitoring</span></li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/active-directory.svg" alt=""></span>Active Directory<span class="logo-tag" aria-hidden="true">Identity</span></li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/jira.svg" alt=""></span>Jira<span class="logo-tag" aria-hidden="true">Ticketing</span></li>
+      <li class="logo"><span class="logo-mark"><img src="assets/02-plugins-integration/icons/make.svg" alt=""></span>Make<span class="logo-tag" aria-hidden="true">Automation</span></li>
+    </ul>
+
+    <a class="text-link reveal reveal-4" href="#webhooks">
+      <span class="text-link-label">
+        Plug any tool with a webhook
+        <img src="assets/02-plugins-integration/icons/underline.svg" alt="">
+      </span>
+      <img class="text-link-arrow" src="assets/02-plugins-integration/icons/arrow-right.svg" alt="">
+    </a>
+  </div>
+</section>
+
+<!--
+  Features (Figma 59:4889) — tabs are the three "Feature content" variants (128:12897 / 13372 / 13502).
+  Illustrations are Figma SVG exports; element ids = Figma node ids (f-127-xxxxx / f-128-xxxxx).
+  Motion (motion.js, all requestAnimationFrame) — scroll pattern replicated from vectura.framer.website:
+  reveal        h2 / lede / nav                     section 15% visible (once), 80/160/240ms
+  sticky nav    .feature-tabs                       sticks 200px from the top; item is active once its
+                                                    card's top passes mid-viewport; click scrolls to card
+  card scroll   .feature-panel                      scroll-linked: fades 0→1 + scales 0.9→1 entering,
+                                                    back down while leaving (linear, no easing)
+  scenes        data-float/pulse/glow/draw/highlight  each card's SVG runs while the card is visible
+  tab state     icon fade + label slide, 200ms     CSS transition (motion.css)
+-->
+<section class="features" id="platform" aria-labelledby="features-title">
+  <div class="features-row features-intro">
+    <div class="spacer" aria-hidden="true"></div>
+    <div class="features-copy">
+      <h2 class="features-title" id="features-title" data-reveal="80">Built for the failures <span class="dim">you haven't had yet.</span></h2>
+      <p class="features-lede" data-reveal="160">Predict hardware failure, keep a live inventory of every edge node, and page the right owner in milliseconds. One control plane for all three.</p>
+    </div>
+  </div>
+
+  <div class="features-row features-content" data-feature-scroll>
+    <nav class="feature-tabs" aria-label="Features" data-reveal="240">
+        <button class="feature-tab" id="tab-predictive" data-target="panel-predictive">
+          <img class="feature-tab-icon" src="assets/03-features/icons/arrow-elbow-down-right.svg" alt="">
+          Predictive maintenace
+        </button>
+        <button class="feature-tab" id="tab-inventory" data-target="panel-inventory">
+          <img class="feature-tab-icon" src="assets/03-features/icons/arrow-elbow-down-right.svg" alt="">
+          Edge node inventory
+        </button>
+        <button class="feature-tab" id="tab-routing" data-target="panel-routing">
+          <img class="feature-tab-icon" src="assets/03-features/icons/arrow-elbow-down-right.svg" alt="">
+          Automated Alert Routing
+        </button>
+    </nav>
+    <div class="feature-visuals">
+        <article class="feature-panel" id="panel-predictive" aria-labelledby="name-predictive">
+          <div class="feature-art" data-svg="assets/03-features/illustrations/predictive-maintenance.svg">
+            <img src="assets/03-features/illustrations/predictive-maintenance.svg" alt="" width="455" height="500">
+          </div>
+          <div class="feature-info">
+            <h3 class="feature-name" id="name-predictive"><img src="assets/03-features/icons/arrow-elbow-down-right.svg" alt="">Predictive maintenace</h3>
+            <p>Correlate automated log analysis with predictive telemetry. Catch edge node failures, maintain network redundancy, and resolve critical alerts before they impact production.</p>
+            <a class="text-link is-ink" href="#model">
+              <span class="text-link-label">
+                How the model works
+                <img src="assets/03-features/icons/underline.svg" alt="">
+              </span>
+              <img class="text-link-arrow" src="assets/03-features/icons/arrow-right.svg" alt="">
+            </a>
+          </div>
+        </article>
+        <article class="feature-panel" id="panel-inventory" aria-labelledby="name-inventory">
+          <div class="feature-art" data-svg="assets/03-features/illustrations/edge-node-inventory.svg">
+            <img src="assets/03-features/illustrations/edge-node-inventory.svg" alt="" width="455" height="500">
+          </div>
+          <div class="feature-info">
+            <h3 class="feature-name" id="name-inventory"><img src="assets/03-features/icons/arrow-elbow-down-right.svg" alt="">Edge node inventory</h3>
+            <p>Every site, rack and VLAN is discovered automatically. Firmware drift, warranty dates and redundancy state live in one inventory that keeps itself current</p>
+            <a class="text-link is-ink" href="#devices">
+              <span class="text-link-label">
+                Supported devices
+                <img src="assets/03-features/icons/underline.svg" alt="">
+              </span>
+              <img class="text-link-arrow" src="assets/03-features/icons/arrow-right.svg" alt="">
+            </a>
+          </div>
+        </article>
+        <article class="feature-panel" id="panel-routing" aria-labelledby="name-routing">
+          <div class="feature-art" data-svg="assets/03-features/illustrations/automated-alert-routing.svg">
+            <img src="assets/03-features/illustrations/automated-alert-routing.svg" alt="" width="455" height="500">
+          </div>
+          <div class="feature-info">
+            <h3 class="feature-name" id="name-routing"><img src="assets/03-features/icons/arrow-elbow-down-right.svg" alt="">Automated Alert Routing</h3>
+            <p>Rules route every critical event to PagerDuty, Slack, Jira or any webhook. Payloads are signed and retried, so on-call gets the context on the first read.</p>
+            <a class="text-link is-ink" href="#webhooks">
+              <span class="text-link-label">
+                Webhook reference
+                <img src="assets/03-features/icons/underline.svg" alt="">
+              </span>
+              <img class="text-link-arrow" src="assets/03-features/icons/arrow-right.svg" alt="">
+            </a>
+          </div>
+        </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ Trust badges (Figma 138:7800) ═════════════
+     Motion (rAF only, runs once): at 30% visible each stat's text does the
+     hero H1 dither reveal (delays 240/320/400/480ms); one shared progress p
+     (usePlay, 1600ms easeOutQuart) drives every count-up and the 32×2 accent bars. Copy is Figma's, including "Connect your fleet" on 99.98%. -->
+<section class="trust" aria-label="BaseLine by the numbers">
+  <ul class="trust-stats">
+    <li class="trust-stat" data-dither="240">
+      <span class="trust-bar" aria-hidden="true"></span>
+      <p class="trust-value"><span class="trust-count" data-count="99.98" data-decimals="2">99.98</span>%</p>
+      <div class="trust-copy">
+        <p class="trust-label">Connect your fleet</p>
+        <p class="trust-note">Trailing 90 days, all customers</p>
+      </div>
+    </li>
+    <li class="trust-stat" data-dither="320">
+      <span class="trust-bar" aria-hidden="true"></span>
+      <p class="trust-value">−<span class="trust-count" data-count="73" data-decimals="0">73</span>%</p>
+      <div class="trust-copy">
+        <p class="trust-label">Unplanned downtime</p>
+        <p class="trust-note">Median, first two quarters</p>
+      </div>
+    </li>
+    <li class="trust-stat" data-dither="400">
+      <span class="trust-bar" aria-hidden="true"></span>
+      <p class="trust-value"><span class="trust-count" data-count="84" data-decimals="0">84</span> ms</p>
+      <div class="trust-copy">
+        <p class="trust-label">Median time to page</p>
+        <p class="trust-note">Event to on-call, P1</p>
+      </div>
+    </li>
+    <li class="trust-stat" data-dither="480">
+      <span class="trust-bar" aria-hidden="true"></span>
+      <p class="trust-value">&lt;<span class="trust-count" data-count="2" data-decimals="0">2</span> wks</p>
+      <div class="trust-copy">
+        <p class="trust-label">Average rollout</p>
+        <p class="trust-note">first agent to full fleet</p>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<!-- ═════════════ How it works (Figma 135:2539) ═════════════
+     Motion: cursor spotlight on the grid (mouse only, as in the hero);
+     title words blur-rise in sequence, then the subtitle;
+     cards rise in at 15% visible (useReveal); each step
+     icon runs the 3.2s Figma loop while its card is hovered (mouse) or while
+     the section is on screen (touch); at rest it shows fully drawn. Icon paths are the exported Figma vectors in
+     assets/05-how-it-works/, inlined at their Figma offsets so they can animate. -->
+<section class="how-it-works" id="how-it-works" aria-labelledby="hiw-title">
+  <div class="hiw-spot" id="hiw-spot" aria-hidden="true"></div>
+  <div class="hiw-head">
+    <h2 class="hiw-title" id="hiw-title">Live on your fleet <span class="dim">in three steps.</span></h2>
+    <p class="hiw-lede">Most teams see their first forecast inside a day. Full rollout averages under two weeks</p>
+  </div>
+  <ol class="hiw-steps">
+    <li class="hiw-step" data-reveal="160">
+      <span class="hiw-num" aria-hidden="true">01</span>
+      <!-- tree-structure: icon-7 (ghost), icon-3, icon-6, icon-14, icon-1, icon-10, icon-12 -->
+      <svg class="hiw-icon" viewBox="0 0 80 80" aria-hidden="true">
+        <g class="ghost" transform="translate(19 21.5)">
+          <path d="M1 18.5H16"/>
+          <path d="M16 18.5V6C16 4.67392 16.5268 3.40215 17.4645 2.46447C18.4021 1.52679 19.6739 1 21 1H28.5"/>
+          <path d="M16 18.5V31C16 32.3261 16.5268 33.5979 17.4645 34.5355C18.4021 35.4732 19.6739 36 21 36H28.5"/>
+        </g>
+        <g transform="translate(19 39)"><path class="hiw-draw hiw-draw-1" pathLength="1" d="M1 1H16"/></g>
+        <g transform="translate(34 21.5)"><path class="hiw-draw hiw-draw-2" pathLength="1" d="M1 18.5V6C1 4.67392 1.52679 3.40215 2.46447 2.46447C3.40215 1.52679 4.67392 1 6 1H13.5"/></g>
+        <g transform="translate(34 39)"><path class="hiw-draw hiw-draw-2" pathLength="1" d="M1 1V13.5C1 14.8261 1.52679 16.0979 2.46447 17.0355C3.40215 17.9732 4.67392 18.5 6 18.5H13.5"/></g>
+        <g transform="translate(4 31.5)"><path class="hiw-pop hiw-pop-1" d="M13.5 1H3.5C2.11929 1 1 2.11929 1 3.5V13.5C1 14.8807 2.11929 16 3.5 16H13.5C14.8807 16 16 14.8807 16 13.5V3.5C16 2.11929 14.8807 1 13.5 1Z"/></g>
+        <g transform="translate(46.5 11.5)"><path class="solid hiw-pop hiw-pop-2" d="M18.5 1H3.5C2.11929 1 1 2.11929 1 3.5V18.5C1 19.8807 2.11929 21 3.5 21H18.5C19.8807 21 21 19.8807 21 18.5V3.5C21 2.11929 19.8807 1 18.5 1Z"/></g>
+        <g transform="translate(46.5 46.5)"><path class="solid hiw-pop hiw-pop-2" d="M18.5 1H3.5C2.11929 1 1 2.11929 1 3.5V18.5C1 19.8807 2.11929 21 3.5 21H18.5C19.8807 21 21 19.8807 21 18.5V3.5C21 2.11929 19.8807 1 18.5 1Z"/></g>
+      </svg>
+      <div class="hiw-text">
+        <h3>Connect your fleet</h3>
+        <p>Drop the agent on one host per site, or point BaseLine at your existing collectors. Every node, rack and VLAN is discovered on its own.</p>
+      </div>
+    </li>
+    <li class="hiw-step" data-reveal="240">
+      <span class="hiw-num" aria-hidden="true">02</span>
+      <!-- sliders: icon-4 rails under the icon-8 luminance mask, knobs icon-13 / icon-16 -->
+      <svg class="hiw-icon" viewBox="0 0 80 80" aria-hidden="true">
+        <mask id="hiw-slider-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="80" height="80">
+          <rect width="80" height="80" fill="#fff"/>
+          <circle class="hiw-knob-a" cx="32.5" cy="25" r="10" fill="#000"/>
+          <circle class="hiw-knob-b" cx="52.5" cy="55" r="10" fill="#000"/>
+        </mask>
+        <g mask="url(#hiw-slider-mask)">
+          <g transform="translate(11.5 24)"><path d="M1 1H56"/><path d="M1 31H56"/></g>
+        </g>
+        <g transform="translate(24 16.5)"><path class="hiw-knob-a" d="M8.5 16C12.6421 16 16 12.6421 16 8.5C16 4.35786 12.6421 1 8.5 1C4.35786 1 1 4.35786 1 8.5C1 12.6421 4.35786 16 8.5 16Z"/></g>
+        <g transform="translate(44 46.5)"><path class="hiw-knob-b" d="M8.5 16C12.6421 16 16 12.6421 16 8.5C16 4.35786 12.6421 1 8.5 1C4.35786 1 1 4.35786 1 8.5C1 12.6421 4.35786 16 8.5 16Z"/></g>
+      </svg>
+      <div class="hiw-text">
+        <h3>Set baselines and rules</h3>
+        <p>BaseLine learns each node's normal in a few days. You decide what counts as critical and who owns it, per site or per service</p>
+      </div>
+    </li>
+    <li class="hiw-step" data-reveal="320">
+      <span class="hiw-num" aria-hidden="true">03</span>
+      <!-- arrows-split: icon-15 (ghost), icon-11, icon-2, icon-17, arrowheads from icon-15 -->
+      <svg class="hiw-icon" viewBox="0 0 80 80" aria-hidden="true">
+        <g class="ghost" transform="translate(9 6.5)">
+          <path d="M31 1V17.25"/>
+          <path d="M31 17.25L11 37.25V61"/>
+          <path d="M31 17.25L51 37.25V61"/>
+          <path d="M1 51L11 61L21 51"/>
+          <path d="M41 51L51 61L61 51"/>
+        </g>
+        <g transform="translate(39 6.5)"><path class="hiw-draw hiw-draw-3" pathLength="1" d="M1 1V17.25"/></g>
+        <g transform="translate(19 22.75)"><path class="hiw-draw hiw-draw-4" pathLength="1" d="M21 1L1 21V44.75"/></g>
+        <g transform="translate(39 22.75)"><path class="hiw-draw hiw-draw-4" pathLength="1" d="M1 1L21 21V44.75"/></g>
+        <g transform="translate(9 6.5)">
+          <path class="hiw-head-arrow" d="M1 51L11 61L21 51"/>
+          <path class="hiw-head-arrow" d="M41 51L51 61L61 51"/>
+        </g>
+      </svg>
+      <div class="hiw-text">
+        <h3>Route to on-call</h3>
+        <p>Critical events page the right owner with full context, open the ticket and post to the channel. Nobody forwards an alert again.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ═════════════ Why choose us (Figma 145:10162) ═════════════
+     Motion: badge + card rise at 15% visible (useReveal); title words
+     blur-rise in sequence; the Old way / Baseline switch slides its thumb,
+     flips the card light → dark, swaps each row (staggered) and counts the
+     warning days 0 ↔ 14. Card states are Figma variants 146:10964 / 146:10966. -->
+<section class="why" aria-labelledby="why-title">
+  <div class="why-head">
+    <div class="pill" data-reveal="0">
+      <span class="mark-bar" aria-hidden="true"></span>
+      <span>WHY BASELINE</span>
+    </div>
+    <h2 class="hiw-title why-title" id="why-title">Monitoring tells you it broke. <span class="dim">BaseLine tells you it will.</span></h2>
+  </div>
+  <div class="why-compare" data-mode="old" data-reveal="200">
+    <div class="why-top">
+      <div class="why-stat" aria-live="polite">
+        <p class="why-eyebrow why-swap"><span class="is-old">THE OLD WAY</span><span class="is-new">With BaseLine</span></p>
+        <p class="why-stat-value"><span class="why-count">0</span> days of warning</p>
+        <p class="why-stat-sub">Before the hardware gives out.</p>
+      </div>
+      <div class="why-switch" role="group" aria-label="Compare">
+        <span class="why-thumb" aria-hidden="true"></span>
+        <button class="why-option" type="button" data-mode="old" aria-pressed="true">Old way</button>
+        <button class="why-option" type="button" data-mode="baseline" aria-pressed="false">Baseline</button>
+      </div>
+    </div>
+    <ul class="why-rows">
+      <li class="why-row" style="--i: 0">
+        <span class="why-label">Spotting problems</span>
+        <div class="why-reason">
+          <span class="why-icon" aria-hidden="true">
+            <img class="is-old" src="assets/06-why-choose-us/icon-2.svg" alt="" width="32" height="32">
+            <img class="is-new" src="assets/06-why-choose-us/tick-circle.svg" alt="" width="32" height="32">
+          </span>
+          <span class="why-reason-text why-swap">
+            <span class="is-old">Someone sets alert limits by hand</span>
+            <span class="is-new">Learns what normal looks like for every machine</span>
+          </span>
+        </div>
+      </li>
+      <li class="why-row" style="--i: 1">
+        <span class="why-label">Early warning</span>
+        <div class="why-reason">
+          <span class="why-icon" aria-hidden="true">
+            <img class="is-old" src="assets/06-why-choose-us/icon-2.svg" alt="" width="32" height="32">
+            <img class="is-new" src="assets/06-why-choose-us/tick-circle.svg" alt="" width="32" height="32">
+          </span>
+          <span class="why-reason-text why-swap">
+            <span class="is-old">You find out after it breaks</span>
+            <span class="is-new">You find out up to 14 days before</span>
+          </span>
+        </div>
+      </li>
+      <li class="why-row" style="--i: 2">
+        <span class="why-label">Knowing what you have</span>
+        <div class="why-reason">
+          <span class="why-icon" aria-hidden="true">
+            <img class="is-old" src="assets/06-why-choose-us/icon-2.svg" alt="" width="32" height="32">
+            <img class="is-new" src="assets/06-why-choose-us/tick-circle.svg" alt="" width="32" height="32">
+          </span>
+          <span class="why-reason-text why-swap">
+            <span class="is-old">Spreadsheets updated every few months</span>
+            <span class="is-new">A live list that updates itself</span>
+          </span>
+        </div>
+      </li>
+      <li class="why-row" style="--i: 3">
+        <span class="why-label">Too many alerts</span>
+        <div class="why-reason">
+          <span class="why-icon" aria-hidden="true">
+            <img class="is-old" src="assets/06-why-choose-us/icon-2.svg" alt="" width="32" height="32">
+            <img class="is-new" src="assets/06-why-choose-us/tick-circle.svg" alt="" width="32" height="32">
+          </span>
+          <span class="why-reason-text why-swap">
+            <span class="is-old">Alerts sit in a shared inbox</span>
+            <span class="is-new">Repeats are grouped, so you only see what matters</span>
+          </span>
+        </div>
+      </li>
+      <li class="why-row" style="--i: 4">
+        <span class="why-label">Pricing</span>
+        <div class="why-reason">
+          <span class="why-icon" aria-hidden="true">
+            <img class="is-old" src="assets/06-why-choose-us/icon-2.svg" alt="" width="32" height="32">
+            <img class="is-new" src="assets/06-why-choose-us/tick-circle.svg" alt="" width="32" height="32">
+          </span>
+          <span class="why-reason-text why-swap">
+            <span class="is-old">You pay more as you add machines</span>
+            <span class="is-new">One flat price per site</span>
+          </span>
+        </div>
+      </li>
+    </ul>
+    <p class="why-note">Flip the switch to see both sides. Most teams are fully moved over in under two weeks.</p>
+  </div>
+</section>
+
+<!-- ═════════════ Testimonials (Figma 146:11357) ═════════════
+     Motion: cursor spotlight on the grid (mouse only, as in the hero);
+     title words blur-rise, then the subtitle; wheel/card/footer rise
+     at 15% visible (useReveal). The topic wheel rolls to the active topic
+     (circular, 600ms), the quote swaps with a blur crossfade and the counter
+     re-scrambles. Auto-advances every 5s while on screen; pauses on hover /
+     focus; a manual pick restarts the 5s count. Figma has one quote
+     (Audit prep, 01 / 06); the other five are marked placeholders. -->
+<section class="tm" aria-labelledby="tm-title" aria-roledescription="carousel">
+  <div class="tm-spot" id="tm-spot" aria-hidden="true"></div>
+  <div class="tm-head">
+    <h2 class="hiw-title tm-title" id="tm-title">What our users are saying</h2>
+    <p class="tm-lede">Most teams see their first forecast inside a day. Full rollout averages under two weeks</p>
+  </div>
+  <div class="tm-body">
+    <div class="tm-row">
+      <ul class="tm-wheel" aria-label="Topics" data-reveal="0">
+        <li><button class="tm-topic" type="button" data-index="0" aria-controls="tm-slide-0" aria-current="true">Audit prep</button></li>
+        <li><button class="tm-topic" type="button" data-index="1" aria-controls="tm-slide-1">Live inventory</button></li>
+        <li><button class="tm-topic" type="button" data-index="2" aria-controls="tm-slide-2">Cutting alert noise</button></li>
+        <li><button class="tm-topic" type="button" data-index="3" aria-controls="tm-slide-3">Multi-site ops</button></li>
+        <li><button class="tm-topic" type="button" data-index="4" aria-controls="tm-slide-4">Failure prediction</button></li>
+        <li><button class="tm-topic" type="button" data-index="5" aria-controls="tm-slide-5">Alert routing</button></li>
+      </ul>
+      <div class="tm-card" data-reveal="120">
+        <p class="tm-count" aria-hidden="true"><span class="tm-count-now">01</span> / 06</p>
+        <div class="tm-slides" aria-live="polite">
+          <figure class="tm-slide is-active" id="tm-slide-0" role="group" aria-roledescription="slide" aria-label="1 of 6: Audit prep">
+            <blockquote class="tm-quote"><p>“Audits used to eat three weeks of hunting for serial numbers. Now we export the live inventory and we are done.”</p></blockquote>
+            <figcaption class="tm-author">
+              <img class="tm-avatar" src="assets/07-testimonials/raw-image-2.jpeg" alt="" width="45" height="45">
+              <span class="tm-who"><span class="tm-name">Halden Freight</span><span class="tm-role">Director of NOC</span></span>
+            </figcaption>
+          </figure>
+          <!-- PLACEHOLDER: not in Figma — replace with a real customer quote + photo (avatar is an Unsplash stock portrait) -->
+          <figure class="tm-slide" id="tm-slide-1" role="group" aria-roledescription="slide" aria-label="2 of 6: Live inventory">
+            <blockquote class="tm-quote"><p>“Every rack, node and VLAN showed up on its own. We stopped keeping the spreadsheet in week one.”</p></blockquote>
+            <figcaption class="tm-author">
+              <img class="tm-avatar" src="assets/07-testimonials/avatar-atlas.jpg" alt="" width="45" height="45">
+              <span class="tm-who"><span class="tm-name">Atlas Logistics</span><span class="tm-role">IT Operations Manager</span></span>
+            </figcaption>
+          </figure>
+          <!-- PLACEHOLDER: not in Figma — replace with a real customer quote + photo (avatar is an Unsplash stock portrait) -->
+          <figure class="tm-slide" id="tm-slide-2" role="group" aria-roledescription="slide" aria-label="3 of 6: Cutting alert noise">
+            <blockquote class="tm-quote"><p>“We used to get four hundred alerts a night. Now repeats are grouped and on-call sees the dozen that matter.”</p></blockquote>
+            <figcaption class="tm-author">
+              <img class="tm-avatar" src="assets/07-testimonials/avatar-meridian.jpg" alt="" width="45" height="45">
+              <span class="tm-who"><span class="tm-name">Meridian Retail</span><span class="tm-role">NOC Manager</span></span>
+            </figcaption>
+          </figure>
+          <!-- PLACEHOLDER: not in Figma — replace with a real customer quote + photo (avatar is an Unsplash stock portrait) -->
+          <figure class="tm-slide" id="tm-slide-3" role="group" aria-roledescription="slide" aria-label="4 of 6: Multi-site ops">
+            <blockquote class="tm-quote"><p>“Forty sites, one view. Each site keeps its own baseline, so a quiet branch never hides behind a busy one.”</p></blockquote>
+            <figcaption class="tm-author">
+              <img class="tm-avatar" src="assets/07-testimonials/avatar-kestrel.jpg" alt="" width="45" height="45">
+              <span class="tm-who"><span class="tm-name">Kestrel Energy</span><span class="tm-role">VP of Operations</span></span>
+            </figcaption>
+          </figure>
+          <!-- PLACEHOLDER: not in Figma — replace with a real customer quote + photo (avatar is an Unsplash stock portrait) -->
+          <figure class="tm-slide" id="tm-slide-4" role="group" aria-roledescription="slide" aria-label="5 of 6: Failure prediction">
+            <blockquote class="tm-quote"><p>“We swapped a failing controller on a Tuesday, not at 3am on a Saturday. The forecast gave us nine days.”</p></blockquote>
+            <figcaption class="tm-author">
+              <img class="tm-avatar" src="assets/07-testimonials/avatar-northwind.jpg" alt="" width="45" height="45">
+              <span class="tm-who"><span class="tm-name">Northwind Rail</span><span class="tm-role">Head of Infrastructure</span></span>
+            </figcaption>
+          </figure>
+          <!-- PLACEHOLDER: not in Figma — replace with a real customer quote + photo (avatar is an Unsplash stock portrait) -->
+          <figure class="tm-slide" id="tm-slide-5" role="group" aria-roledescription="slide" aria-label="6 of 6: Alert routing">
+            <blockquote class="tm-quote"><p>“Pages land with the owner, the runbook and the ticket already open. Handoffs went from minutes to seconds.”</p></blockquote>
+            <figcaption class="tm-author">
+              <img class="tm-avatar" src="assets/07-testimonials/avatar-corvel.jpg" alt="" width="45" height="45">
+              <span class="tm-who"><span class="tm-name">Corvel Health</span><span class="tm-role">SRE Lead</span></span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+    <div class="tm-foot" data-reveal="200">
+      <a class="text-link is-light" href="#reviews">
+        <span class="text-link-label">
+          See more customer reviews
+          <img src="assets/07-testimonials/icon-2.svg" alt="">
+        </span>
+        <img class="text-link-arrow" src="assets/07-testimonials/icon-1.svg" alt="">
+      </a>
+      <div class="tm-arrows">
+        <button class="tm-arrow is-prev" type="button" aria-label="Previous testimonial"><img src="assets/07-testimonials/icon-3.svg" alt=""></button>
+        <button class="tm-arrow is-next" type="button" aria-label="Next testimonial"><img src="assets/07-testimonials/icon-3.svg" alt=""></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ Pricing (Figma 150:13344) ═════════════
+     Motion: badge, switch and plans rise at 15% visible (useReveal); title
+     words blur-rise, then the subtitle. Monthly / Annual switch slides its
+     thumb (same switch as Why choose us), prices count to the new figure and
+     the billing note crossfades. Annual figures (−16%: $419, $1,091) are
+     derived from Figma's monthly prices; Figma only draws the monthly state. -->
+<section class="pricing" id="pricing" aria-labelledby="price-title" data-billing="monthly">
+  <div class="price-head">
+    <div class="pill" data-reveal="0">
+      <span class="mark-bar" aria-hidden="true"></span>
+      <span>Pricing</span>
+    </div>
+    <div class="price-copy">
+      <h2 class="hiw-title price-title" id="price-title">Priced per site. <span class="dim">Not per alert.</span></h2>
+      <p class="price-lede">Most teams see their first forecast inside a day. Full rollout averages under two weeks</p>
+    </div>
+  </div>
+  <div class="why-switch price-switch" role="group" aria-label="Billing period" data-reveal="80">
+    <span class="why-thumb" aria-hidden="true"></span>
+    <button class="why-option" type="button" data-billing="monthly" aria-pressed="true">Monthly</button>
+    <button class="why-option" type="button" data-billing="annual" aria-pressed="false">Annual <small>-16%</small></button>
+  </div>
+  <ul class="price-plans">
+    <li class="plan" data-reveal="120">
+      <div class="plan-intro">
+        <h3 class="plan-name">Branch Office</h3>
+        <p class="plan-tagline">One site, fully covered.</p>
+      </div>
+      <div class="plan-price">
+          <p class="plan-amount">$<span class="plan-num" data-monthly="499" data-annual="419">499</span><span class="per">/mo</span></p>
+          <p class="plan-bill"><span class="is-monthly">Billed monthly, cancel anytime</span><span class="is-annual">Billed annually, save 16%</span></p>
+      </div>
+      <dl class="plan-stats">
+            <div class="plan-stat"><dt>Nodes</dt><dd>50</dd></div>
+            <div class="plan-stat"><dt>Retention</dt><dd>30d</dd></div>
+            <div class="plan-stat"><dt>Channels</dt><dd>2</dd></div>
+      </dl>
+      <ul class="plan-features">
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Predictive maintenance on every rack</li>
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Live edge node inventory</li>
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Alert routing to Slack and email</li>
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Business-hours support</li>
+      </ul>
+      <a class="plan-cta" href="#start">Start with branch</a>
+    </li>
+    <li class="plan is-featured" data-reveal="200">
+      <div class="plan-intro">
+        <h3 class="plan-name">Data Center</h3>
+        <p class="plan-tagline">One site, fully covered.</p>
+      </div>
+      <div class="plan-price">
+          <p class="plan-amount">$<span class="plan-num" data-monthly="1299" data-annual="1091">1,299</span><span class="per">/mo</span></p>
+          <p class="plan-bill"><span class="is-monthly">Billed monthly, cancel anytime</span><span class="is-annual">Billed annually, save 16%</span></p>
+      </div>
+      <dl class="plan-stats">
+            <div class="plan-stat"><dt>Nodes</dt><dd>500</dd></div>
+            <div class="plan-stat"><dt>Retention</dt><dd>90d</dd></div>
+            <div class="plan-stat"><dt>uptime SLA</dt><dd>99.99%</dd></div>
+      </dl>
+      <ul class="plan-features">
+          <li><img src="assets/08-pricing/icon-2.svg" alt="" width="24" height="24">Everything in Branch Office</li>
+          <li><img src="assets/08-pricing/icon-2.svg" alt="" width="24" height="24">Unlimited routing: PagerDuty, Jira, etc</li>
+          <li><img src="assets/08-pricing/icon-2.svg" alt="" width="24" height="24">Network redundancy map</li>
+          <li><img src="assets/08-pricing/icon-2.svg" alt="" width="24" height="24">SSO and Active Directory sync</li>
+          <li><img src="assets/08-pricing/icon-2.svg" alt="" width="24" height="24">24/7 on-call support</li>
+      </ul>
+      <a class="plan-cta" href="#deploy">Deploy Baseline</a>
+    </li>
+    <li class="plan" data-reveal="280">
+      <div class="plan-intro">
+        <h3 class="plan-name">Enterprise Edge</h3>
+        <p class="plan-tagline">Global fleets and air-gapped sites.</p>
+      </div>
+      <div class="plan-price">
+          <p class="plan-amount">Custom</p>
+          <p class="plan-bill"><span>Volume pricing by node count</span></p>
+      </div>
+      <dl class="plan-stats">
+            <div class="plan-stat"><dt>Nodes</dt><dd>∞</dd></div>
+            <div class="plan-stat"><dt>Retention</dt><dd>1yr+</dd></div>
+            <div class="plan-stat"><dt>Support</dt><dd>1:1</dd></div>
+      </dl>
+      <ul class="plan-features">
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Everything in Data Center</li>
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Self-hosted or air-gapped control plane</li>
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Multi-region failover</li>
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Custom SLAs and audit log export</li>
+          <li><img src="assets/08-pricing/icon-1.svg" alt="" width="24" height="24">Dedicated technical account manager</li>
+      </ul>
+      <a class="plan-cta" href="#sales">Talk to sales</a>
+    </li>
+  </ul>
+  <div class="price-more" data-reveal="200">
+    <a class="text-link is-ink" href="#security">
+      <span class="text-link-label">
+        Explore Security
+        <img src="assets/08-pricing/icon-3.svg" alt="">
+      </span>
+      <img class="text-link-arrow" src="assets/08-pricing/icon-4.svg" alt="">
+    </a>
+  </div>
+</section>
+
+<!-- ═════════════ Footer (Figma 153:19865) ═════════════
+     Motion: CTA — cursor spotlight on the grid (mouse only), pill + copy +
+     buttons rise (useReveal), title dither-reveals like the hero H1.
+     Links — brand fades in from −6px (Figma: 0.22,1,0.36,1), columns rise.
+     Robot arm divider: rAF pick-and-place loop (IK + turret swing with
+     foreshortening, belts and boxes at 140px/s), paused off screen. -->
+<footer class="site-foot">
+  <section class="foot-cta" aria-labelledby="foot-title">
+    <div class="foot-spot" id="foot-spot" aria-hidden="true"></div>
+    <div class="foot-copy">
+      <div class="pill" data-reveal="0">
+        <span class="mark-bar" aria-hidden="true"></span>
+        <span>Ready when you are</span>
+      </div>
+      <div class="foot-text">
+        <h2 class="foot-title" id="foot-title">The autonomous control plane for enterprise IT.</h2>
+        <p class="foot-sub" data-reveal="160">Correlate automated log analysis with predictive telemetry. Catch edge node failures, maintain network redundancy, and resolve critical alerts before they impact production.</p>
+      </div>
+    </div>
+    <div class="foot-actions" data-reveal="240">
+      <a class="btn btn-primary" href="#deploy">
+        <span class="sweep" aria-hidden="true"></span>
+        <span class="mark-bar" aria-hidden="true"></span>
+        Deploy Baseline
+      </a>
+      <a class="btn btn-secondary" href="#docs">View Documentation</a>
+    </div>
+  </section>
+
+  <div class="foot-links">
+    <div class="foot-main">
+      <div class="foot-brand">
+        <a class="foot-logo" href="#top" aria-label="BaseLine home">
+          <span class="foot-logo-mark" aria-hidden="true"><i></i></span>
+          <span class="foot-logo-id" aria-hidden="true">
+            <span class="foot-logo-name">BASELINE</span>
+            <span class="foot-logo-tag">Enterprise control plane</span>
+          </span>
+        </a>
+        <p class="foot-desc">Predictive monitoring for every rack, branch and edge node.</p>
+      </div>
+      <nav class="foot-col" aria-label="Product" data-reveal="80">
+        <h3>PRODUCT</h3>
+        <ul>
+          <li><a href="#platform">Platform</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#changelog">Changelog</a></li>
+          <li><a href="#status">Status</a></li>
+        </ul>
+      </nav>
+      <nav class="foot-col" aria-label="Resources" data-reveal="160">
+        <h3>RESOURCES</h3>
+        <ul>
+          <li><a href="#docs">Docs</a></li>
+          <li><a href="#api">API References</a></li>
+          <li><a href="#migration">Migration Guide</a></li>
+          <li><a href="#stories">Customer stories</a></li>
+          <li><a href="#blog">Blog</a></li>
+        </ul>
+      </nav>
+      <nav class="foot-col" aria-label="Company" data-reveal="240">
+        <h3>COMPANY</h3>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#careers">Careers</a></li>
+          <li><a href="#security">Security</a></li>
+          <li><a href="#sales">Contact Sales</a></li>
+        </ul>
+      </nav>
+      <nav class="foot-col" aria-label="Legal" data-reveal="320">
+        <h3>LEGAL</h3>
+        <ul>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="#terms">Terms</a></li>
+          <li><a href="#dpa">DPA</a></li>
+          <li><a href="#cookies">Cookie Settings</a></li>
+          <li><a href="#status">Status</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="foot-bottom">
+      <p class="foot-legal">© 2026 BaseLine, Inc. All rights reserved.</p>
+      <ul class="foot-social">
+        <li><a href="#x" aria-label="BaseLine on X"><img src="assets/09-footer/icon-1.svg" alt=""></a></li>
+        <li><a href="#stackoverflow" aria-label="BaseLine on Stack Overflow"><img src="assets/09-footer/icon-12.svg" alt=""></a></li>
+        <li><a href="#github" aria-label="BaseLine on GitHub"><img src="assets/09-footer/icon-3.svg" alt=""></a></li>
+      </ul>
+    </div>
+  </div>
+  <!-- Robot arm divider: full-bleed 132px strip, SVG drawn by motion.js
+       (viewBox centred on the arm base, divider line at y = 0). -->
+  <div class="robot-strip" aria-hidden="true">
+    <svg class="robot-svg" viewBox="-720 -120 1440 132" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+</footer>
+
+<script>
+  // Layout: scale the fixed 1200px product mockup down to fit narrower viewports.
+  // Phones (≤767px, Mobbin pattern): a fixed, readable 60% scale instead —
+  // the mockup starts one gutter in and runs off the right edge, cropped.
+  (function () {
+    var stage = document.getElementById('mockup-stage');
+    var frame = document.getElementById('mockup-frame');
+    var W = 1200, H = 686, GUTTER = 16, PHONE_SCALE = 0.6;
+    var phone = window.matchMedia('(max-width: 767px)');
+    function fit() {
+      var avail = document.documentElement.clientWidth - GUTTER * 2;
+      var s = phone.matches ? PHONE_SCALE : Math.min(1, avail / W);
+      stage.style.width = (W * s) + 'px';
+      stage.style.height = (H * s) + 'px';
+      frame.style.transform = s < 1 ? 'scale(' + s + ')' : '';
+    }
+    fit();
+    window.addEventListener('resize', fit);
+  })();
+</script>
+<script src="motion.js"></script>
+</body>
+</html>

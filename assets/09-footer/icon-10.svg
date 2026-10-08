@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="33.25" height="11.25" viewBox="0 0 33.25 11.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Turret">
+<path id="Turret body" d="M30.625 0.625H2.625C1.52043 0.625 0.625 1.52043 0.625 2.625V8.625C0.625 9.72957 1.52043 10.625 2.625 10.625H30.625C31.7296 10.625 32.625 9.72957 32.625 8.625V2.625C32.625 1.52043 31.7296 0.625 30.625 0.625Z" fill="#141414" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Turret seam" d="M0.625 5.625H32.625" stroke="white" stroke-opacity="0.35"/>
+</g>
+</svg>

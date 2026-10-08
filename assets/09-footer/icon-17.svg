@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="17.25" height="13.25" viewBox="0 0 17.25 13.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Package">
+<path id="Box" d="M15.125 0.625H2.125C1.29657 0.625 0.625 1.29657 0.625 2.125V11.125C0.625 11.9534 1.29657 12.625 2.125 12.625H15.125C15.9534 12.625 16.625 11.9534 16.625 11.125V2.125C16.625 1.29657 15.9534 0.625 15.125 0.625Z" fill="black" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Tape" d="M8.625 0.625V5.625" stroke="white" stroke-opacity="0.5"/>
+<path id="Label" d="M3.625 9.125H7.625" stroke="white" stroke-opacity="0.5" stroke-linecap="round"/>
+</g>
+</svg>

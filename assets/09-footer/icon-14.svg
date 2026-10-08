@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="13.25" height="13.25" viewBox="0 0 13.25 13.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Wrist joint">
+<path id="Wrist joint disc" d="M6.625 12.625C9.93871 12.625 12.625 9.93871 12.625 6.625C12.625 3.31129 9.93871 0.625 6.625 0.625C3.31129 0.625 0.625 3.31129 0.625 6.625C0.625 9.93871 3.31129 12.625 6.625 12.625Z" fill="#141414" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Wrist joint ring" d="M6.625 9.925C8.44754 9.925 9.925 8.44754 9.925 6.625C9.925 4.80246 8.44754 3.325 6.625 3.325C4.80246 3.325 3.325 4.80246 3.325 6.625C3.325 8.44754 4.80246 9.925 6.625 9.925Z" fill="black" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Wrist joint pin" d="M6.62502 8.22539C7.50868 8.22539 8.22502 7.50904 8.22502 6.62539C8.22502 5.74173 7.50868 5.02539 6.62502 5.02539C5.74137 5.02539 5.02502 5.74173 5.02502 6.62539C5.02502 7.50904 5.74137 8.22539 6.62502 8.22539Z" fill="white"/>
+</g>
+</svg>

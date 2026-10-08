@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="27.25" height="26.75" viewBox="0 0 27.25 26.75" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Gripper">
+<path id="Wrist" d="M16.625 0.625H10.625V8.625H16.625V0.625Z" fill="#0B0B0B" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Palm" d="M25.125 8.625H2.125C1.29657 8.625 0.625 9.29657 0.625 10.125V12.625C0.625 13.4534 1.29657 14.125 2.125 14.125H25.125C25.9534 14.125 26.625 13.4534 26.625 12.625V10.125C26.625 9.29657 25.9534 8.625 25.125 8.625Z" fill="#141414" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Grip LED" d="M13.625 12.675C14.343 12.675 14.925 12.093 14.925 11.375C14.925 10.657 14.343 10.075 13.625 10.075C12.907 10.075 12.325 10.657 12.325 11.375C12.325 12.093 12.907 12.675 13.625 12.675Z" fill="white" fill-opacity="0.35"/>
+<path id="Finger left" d="M3.125 14.125H2.125C1.57272 14.125 1.125 14.5727 1.125 15.125V25.125C1.125 25.6773 1.57272 26.125 2.125 26.125H3.125C3.67728 26.125 4.125 25.6773 4.125 25.125V15.125C4.125 14.5727 3.67728 14.125 3.125 14.125Z" fill="#0B0B0B" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Finger right" d="M25.125 14.125H24.125C23.5727 14.125 23.125 14.5727 23.125 15.125V25.125C23.125 25.6773 23.5727 26.125 24.125 26.125H25.125C25.6773 26.125 26.125 25.6773 26.125 25.125V15.125C26.125 14.5727 25.6773 14.125 25.125 14.125Z" fill="#0B0B0B" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

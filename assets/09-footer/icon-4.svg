@@ -1,0 +1,17 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="124.25" height="14.25" viewBox="0 0 124.25 14.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Belt in">
+<path id="Belt in slab" d="M122.125 5.625H2.125C1.29657 5.625 0.625 6.29657 0.625 7.125V12.125C0.625 12.9534 1.29657 13.625 2.125 13.625H122.125C122.953 13.625 123.625 12.9534 123.625 12.125V7.125C123.625 6.29657 122.953 5.625 122.125 5.625Z" fill="#0B0B0B" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="Belt in rollers">
+<path id="Roller 01" d="M7.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 02" d="M21.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 03" d="M35.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 04" d="M49.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 05" d="M63.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 06" d="M77.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 07" d="M91.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 08" d="M105.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+<path id="Roller 09" d="M119.625 7.625V11.625" stroke="white" stroke-opacity="0.3"/>
+</g>
+<path id="End stop" d="M121.125 0.625H119.625C119.349 0.625 119.125 0.848858 119.125 1.125V5.125C119.125 5.40114 119.349 5.625 119.625 5.625H121.125C121.401 5.625 121.625 5.40114 121.625 5.125V1.125C121.625 0.848858 121.401 0.625 121.125 0.625Z" fill="#0B0B0B" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

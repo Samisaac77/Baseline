@@ -1,0 +1,758 @@
+/* ==========================================================================
+   Baseline hero — motion config
+   All keyframes, durations, delays and easings live here so they can be
+   retuned in one place. Behaviour (pointer, scroll, count-up, live feed)
+   lives in motion.js.
+
+   Every animation is declared inside
+   `@media (prefers-reduced-motion: no-preference)`, so under reduced motion
+   every element renders in its final state with no animation or transition.
+   ========================================================================== */
+
+:root {
+  /* Easing — one curve for everything that enters; linear only for drift. */
+  --ease-enter: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* 1. Load sequence */
+  --rise-duration: 700ms;
+  --rise-distance: 16px;
+  --rise-blur: 4px;
+  --rise-delay-1: 0ms;
+  --rise-delay-2: 80ms;
+  --rise-delay-3: 160ms;
+  --rise-delay-4: 240ms;
+
+  /* 1b. H1 dither reveal (read by motion.js) */
+  --dither-delay: 80ms;      /* start — the H1's slot in the load stagger */
+  --dither-hold: 350ms;      /* everything scrambles before the first letter resolves */
+  --dither-step: 30ms;       /* gap between letters resolving, left → right */
+  --dither-tick: 70ms;       /* how often the block glyphs reshuffle */
+  --dither-chars: 41;        /* non-space characters in the H1 (for the blink timing) */
+
+  /* 2. Ambient loops */
+  --grid-cell: 32px;
+  --grid-drift-duration: 16s;
+  --live-interval: 2600ms;   /* status pill: how often the live numbers update */
+
+  /* 3. Cursor spotlight */
+  --spot-radius: 160px;
+  --spot-fade: 300ms;
+  --spot-line: rgba(28, 25, 23, 0.22);   /* stone-900 @ 0.22 — the brighter copy of the grid */
+
+  /* 4. Period blink */
+  --blink-duration: 1000ms;
+  /* Lands just after the last H1 letter resolves (~1.73s with the values above). */
+  --blink-delay: calc(var(--dither-delay) + var(--dither-hold) + (var(--dither-chars) - 1) * var(--dither-step) + 100ms);
+
+  /* 5. Buttons */
+  --btn-hover-duration: 200ms;
+  --btn-hover-scale: 1.03;
+  --btn-press-scale: 0.98;
+  --sweep-duration: 800ms;
+  --focus-offset: 4px;
+
+  /* 7. Mockup contents */
+  --bar-duration: 500ms;
+  --bar-stagger: 24ms;
+  --bar-from: 0.15;
+  --arc-duration: 1400ms;
+  --feed-in-duration: 600ms;
+  --feed-in-distance: -8px;
+  --id-flash-duration: 1600ms;
+
+  /* ── Integrations section ── */
+  --inview-threshold: 0.35;  /* read by motion.js: share of the section visible before it rises */
+  --carousel-speed: 80;      /* px per second (read by motion.js); 1/3 under reduced motion */
+  --carousel-ease: 8;        /* velocity easing rate: v += (target - v) * min(1, dt * rate) */
+  --carousel-pad: 48px;      /* vertical room so the category pill isn't clipped */
+  --logo-ink-rest: 0.45;
+  --logo-ink-dim: 0.2;
+  --logo-lift: -2px;
+  --logo-hover-duration: 300ms;
+  --logo-tag-offset: 16px;
+  --logo-tag-duration: 200ms;
+  --link-hover-duration: 200ms;
+  --link-arrow-nudge: 4px;
+
+  /* ── Features section (read by motion.js; easing is easeOutQuart in JS) ── */
+  --feature-reveal-threshold: 0.15;
+  --feature-reveal-duration: 700ms;
+  --feature-reveal-shift: 16px;
+  --feature-name-duration: 500ms;  /* mobile card title arrow: dimmed → black when the card goes active */
+  --feature-tab-duration: 200ms;   /* corner arrow fade + label slide */
+
+  /* ── How it works (Figma timeline: one 3.2s loop shared by all three icons) ── */
+  --hiw-loop: 3.2s;
+  --hiw-inout: cubic-bezier(0.65, 0, 0.35, 1);  /* fits Figma's sampled draw / slide curves */
+  --hiw-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --hiw-head-threshold: 0.6;   /* share of the heading visible before the words rise */
+  --hiw-word-duration: 800ms;
+  --hiw-word-stagger: 45ms;
+  --hiw-word-shift: 0.35em;
+  --hiw-word-blur: 6px;
+  --hiw-lede-gap: 120ms;       /* subtitle starts this long after the last word starts */
+  --hiw-card-scale: 1.03;      /* step card hover */
+  --hiw-card-duration: 350ms;
+  --hiw-card-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.12);
+
+  /* ── Trust badges (read by motion.js; rAF only, easeOutQuart) ── */
+  --trust-reveal-threshold: 0.3;   /* share of the section visible before it plays */
+  --trust-play-duration: 1600ms;   /* shared progress p: every count-up + accent bar */
+
+  /* ── Testimonials (read by motion.js where noted) ── */
+  --tm-roll-duration: 600ms;   /* wheel roll + active topic scale */
+  --tm-swap-duration: 500ms;   /* read by motion.js: quote blur crossfade */
+  --tm-swap-shift: 16px;
+  --tm-swap-blur: 6px;
+  --tm-autoplay: 5000;         /* read by motion.js: ms per testimonial while on screen */
+
+  /* ── Pricing (read by motion.js where noted) ── */
+  --price-count-duration: 700ms;  /* read by motion.js: price tween on billing change */
+  --price-note-duration: 400ms;
+  --price-cta-duration: 250ms;
+
+  /* ── Nav bar ── */
+  --nav-in-duration: 600ms;         /* drops in with the hero load sequence */
+  --nav-in-shift: -8px;
+  --nav-menu-duration: 500ms;       /* mobile full-screen sheet unroll + burger → ✕ */
+
+  /* ── Footer ── */
+  --foot-brand-duration: 900ms;     /* Figma: 0→1, −6px → 0, cubic-bezier(0.22, 1, 0.36, 1) */
+  --foot-brand-shift: -6px;
+  /* Footer link text roll (finara.framer.website): Framer spring
+     stiffness 500 · damping 60 · mass 2 (ζ ≈ 0.95), sampled over 600ms. */
+  --roll-duration: 600ms;
+  --roll-spring: linear(0, 0.084, 0.251, 0.428, 0.584, 0.707, 0.8, 0.867, 0.914, 0.945, 0.966, 0.979, 0.988, 0.993, 0.996, 0.998, 0.999, 1);
+
+  /* ── Why choose us (read by motion.js where noted) ── */
+  --why-flip-duration: 800ms;  /* card light ↔ dark colour fade */
+  --why-flip-ease: cubic-bezier(0.65, 0, 0.35, 1);       /* in-out: no hard first frame */
+  --why-thumb-duration: 650ms;
+  --why-thumb-ease: cubic-bezier(0.34, 1.25, 0.64, 1);   /* slight overshoot, settles */
+  --why-swap-duration: 600ms;  /* row text / icon crossfade */
+  --why-swap-ease: cubic-bezier(0.33, 1, 0.68, 1);       /* easeOutCubic */
+  --why-swap-delay: 150ms;     /* rows start as the card colour passes its midpoint */
+  --why-swap-shift: 10px;
+  --why-swap-blur: 4px;
+  --why-row-stagger: 60ms;
+  --why-count-duration: 900ms; /* read by motion.js: 0 ↔ 14 days count */
+}
+
+/* --------------------------------------------------------------------------
+   Keyframes
+   -------------------------------------------------------------------------- */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(var(--rise-distance)); filter: blur(var(--rise-blur)); }
+  to   { opacity: 1; transform: translateY(0);                    filter: blur(0); }
+}
+
+/* Exactly one cell on each axis, so the loop is seamless.
+   Layer 1 = vertical rules (repeat-x), layer 2 = horizontal rules (repeat-y). */
+@keyframes grid-drift {
+  from { background-position: 26px 0, 0 0; }
+  to   { background-position: calc(26px + var(--grid-cell)) 0, 0 var(--grid-cell); }
+}
+
+@keyframes blink {
+  0%, 49%, 100% { opacity: 1; }
+  25%, 75%      { opacity: 0; }
+}
+
+@keyframes feed-in {
+  from { opacity: 0; transform: translateY(var(--feed-in-distance)); background-color: var(--bg-app); }
+  to   { opacity: 1; transform: translateY(0);                       background-color: transparent; }
+}
+
+@keyframes id-flash {
+  0%, 55% { background-color: var(--black); color: var(--white); box-shadow: 0 0 0 2px var(--black); }
+  100%    { background-color: transparent;   color: var(--black); box-shadow: 0 0 0 2px transparent; }
+}
+
+/* --------------------------------------------------------------------------
+   Static structure (no motion) — safe at rest and under reduced motion
+   -------------------------------------------------------------------------- */
+.grid-layer {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+          mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* H1 dither reveal. Each real character stays in the DOM (transparent while
+   scrambling) so the line never reflows. The quarter-block glyph is drawn
+   with four background quadrants sized to the letter's own cell, so it
+   doesn't depend on a fallback font that has ▖▗▘▙▚▛▜▝▞▟. */
+.dither-ch { position: relative; }
+.dither-ch.is-hidden,
+.dither-ch.is-scrambling { color: transparent; }
+.dither-ch.is-scrambling::after {
+  --on: var(--black);
+  content: "";
+  position: absolute;
+  top: var(--dither-glyph-top, 0.24em);
+  bottom: var(--dither-glyph-bottom, 0.2em);
+  left: 0.04em;
+  right: 0.04em;
+  background:
+    linear-gradient(var(--tl, transparent), var(--tl, transparent)) left top / 50% 50% no-repeat,
+    linear-gradient(var(--tr, transparent), var(--tr, transparent)) right top / 50% 50% no-repeat,
+    linear-gradient(var(--bl, transparent), var(--bl, transparent)) left bottom / 50% 50% no-repeat,
+    linear-gradient(var(--br, transparent), var(--br, transparent)) right bottom / 50% 50% no-repeat;
+}
+.dither-ch[data-glyph="▘"]::after { --tl: var(--on); }
+.dither-ch[data-glyph="▝"]::after { --tr: var(--on); }
+.dither-ch[data-glyph="▖"]::after { --bl: var(--on); }
+.dither-ch[data-glyph="▗"]::after { --br: var(--on); }
+.dither-ch[data-glyph="▚"]::after { --tl: var(--on); --br: var(--on); }
+.dither-ch[data-glyph="▞"]::after { --tr: var(--on); --bl: var(--on); }
+.dither-ch[data-glyph="▛"]::after { --tl: var(--on); --tr: var(--on); --bl: var(--on); }
+.dither-ch[data-glyph="▜"]::after { --tl: var(--on); --tr: var(--on); --br: var(--on); }
+.dither-ch[data-glyph="▙"]::after { --tl: var(--on); --bl: var(--on); --br: var(--on); }
+.dither-ch[data-glyph="▟"]::after { --tr: var(--on); --bl: var(--on); --br: var(--on); }
+.trust .dither-ch.is-scrambling::after { --on: var(--white); }   /* glyphs on the black band */
+.tm .dither-ch.is-scrambling::after { --on: var(--grayscale-500); }  /* testimonial counter */
+.foot-title .dither-ch.is-scrambling::after { --on: var(--white); }   /* footer CTA title */
+
+/* Spotlight copy of the grid: only exists for mouse users with motion allowed. */
+.grid-spot, .hiw-spot, .tm-spot, .foot-spot { display: none; }
+
+.period { display: inline-block; }
+
+
+.btn-primary { position: relative; overflow: hidden; }
+.sweep { display: none; }
+
+.btn-secondary:hover { background: var(--bg-app); }
+
+.btn:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: var(--focus-offset);
+}
+
+.mockup-stage { perspective: 1600px; }
+.mockup-reveal {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  will-change: transform;
+}
+
+.uptime-bars i,
+.bars .bar { transform-origin: bottom; }
+
+#uptime-value { font-variant-numeric: tabular-nums; }
+#feed-total, #feed-pages { font-variant-numeric: tabular-nums; }
+
+/* Load arc: pathLength = 1. Dash 1 + gap 2 means an offset of 1.01 hides the
+   arc completely (no round-cap dot); offset 0 shows the full 64% segment. */
+.arc-load path { stroke-dasharray: 1 2; stroke-dashoffset: 0; }
+
+.sid { border-radius: 2px; }
+
+/* --------------------------------------------------------------------------
+   Motion — only when the user hasn't asked for reduced motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* 1. Load sequence — staggered rise */
+  .rise   { animation: rise var(--rise-duration) var(--ease-enter) both; }
+  .rise-1 { animation-delay: var(--rise-delay-1); }
+  .rise-2 { animation-delay: var(--rise-delay-2); }
+
+  /* 1b. Hide the H1 for the instant before motion.js splits it into letters. */
+  .js .hero-title[data-dither]:not(.is-dithered) { visibility: hidden; }
+  .rise-3 { animation-delay: var(--rise-delay-3); }
+  .rise-4 { animation-delay: var(--rise-delay-4); }
+
+  /* 2a. Ambient — grid drift (both copies share timing, so they stay in sync) */
+  .hero-grid { animation: grid-drift var(--grid-drift-duration) linear infinite; }
+
+  /* 3. Cursor spotlight (also the How it works grid — .hiw-spot) */
+  .grid-spot,
+  .hiw-spot,
+  .tm-spot,
+  .foot-spot {
+    display: block;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--spot-fade) var(--ease-enter);
+    --mx: -9999px;
+    --my: -9999px;
+    -webkit-mask-image: radial-gradient(var(--spot-radius) circle at var(--mx) var(--my), black, transparent);
+            mask-image: radial-gradient(var(--spot-radius) circle at var(--mx) var(--my), black, transparent);
+  }
+  .grid-spot .hero-grid,
+  .hiw-spot {
+    opacity: 1;
+    background-image:
+      linear-gradient(to right, var(--spot-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--spot-line) 1px, transparent 1px);
+  }
+
+  /* 4. Headline period blink */
+  .period { animation: blink var(--blink-duration) steps(1, end) var(--blink-delay) 1 both; }
+
+  /* 5. Buttons */
+  .btn {
+    transition:
+      transform var(--btn-hover-duration) ease-out,
+      background-color var(--btn-hover-duration) ease-out;
+  }
+  .sweep {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.25), transparent);
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  @media (hover: hover) {
+    .btn-primary:hover { transform: scale(var(--btn-hover-scale)); }
+    .btn-primary:hover .sweep {
+      transform: translateX(400%) skewX(-20deg);
+      transition: transform var(--sweep-duration) ease-out;
+    }
+  }
+  .btn-primary:active { transform: scale(var(--btn-press-scale)); }
+
+  /* 7. Mockup contents — resting state until the mockup goes active */
+  .uptime-bars i,
+  .bars .bar {
+    transition: transform var(--bar-duration) var(--ease-enter) calc(var(--i) * var(--bar-stagger));
+  }
+  .js .mockup:not(.is-active) .uptime-bars i,
+  .js .mockup:not(.is-active) .bars .bar { transform: scaleY(var(--bar-from)); }
+
+  .arc-load path { transition: stroke-dashoffset var(--arc-duration) var(--ease-enter); }
+  .js .mockup:not(.is-active) .arc-load path { stroke-dashoffset: 1.01; }
+
+  .trow.is-new { animation: feed-in var(--feed-in-duration) var(--ease-enter) both; }
+  .sid.flash   { animation: id-flash var(--id-flash-duration) var(--ease-enter) both; }
+}
+
+/* ==========================================================================
+   Integrations section — enter rise, logo carousel, logo + link hover
+   ========================================================================== */
+
+/* Static structure (safe at rest and under reduced motion) -------------- */
+.logo { position: relative; }
+.logo-tag { display: none; }
+
+/* Carousel, built by motion.js from the static .logo-row.
+   marquee (focusable, carries the focus ring)
+     └ mask (clips + fades the edges)
+         └ track (translated every frame; 2 copies of the list) */
+.logo-marquee {
+  width: 1280px;
+  max-width: 100%;
+}
+.logo-marquee:focus-visible { outline: 2px solid var(--black); outline-offset: 8px; }
+.logo-mask {
+  overflow: hidden;
+  /* Padding room for the pill without changing the section's layout. */
+  margin: calc(var(--carousel-pad) * -1) 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+          mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+}
+.logo-track {
+  display: flex;
+  width: max-content;
+  padding: var(--carousel-pad) 0;
+  will-change: transform;
+}
+.logo-copy {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--logo-gap, 64px);
+  /* trailing gap so copy 1 → copy 2 spacing matches the gaps inside a copy */
+  padding: 0 var(--logo-gap, 64px) 0 0;
+  margin: 0;
+  list-style: none;
+}
+.logo-marquee .logo { opacity: var(--logo-ink-rest); }
+.logo-marquee .logo-tag {
+  display: block;
+  position: absolute;
+  top: calc(100% + var(--logo-tag-offset));
+  left: 50%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--black);            /* accent: none, monochrome → ink */
+  color: var(--white);
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0;
+  line-height: normal;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 0);
+}
+@media (hover: hover) {
+  .logo-marquee:hover .logo { opacity: var(--logo-ink-dim); }
+  .logo-marquee .logo:hover { opacity: 1; }
+  .logo-marquee .logo:hover .logo-tag { opacity: 1; }
+}
+
+/* Text link: rest state (gray text, 20% underline, 4px gap) is in index.html. */
+.text-link:hover,
+.text-link:focus-visible { color: var(--black); }
+.text-link:hover .text-link-label img,
+.text-link:focus-visible .text-link-label img { opacity: 1; }
+
+/* Motion ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  /* 1. One-shot rise when the section is 35% visible */
+  .js .integrations:not(.is-in-view) .reveal { opacity: 0; }
+  .integrations.is-in-view .reveal { animation: rise var(--rise-duration) var(--ease-enter) both; }
+  .reveal-1 { animation-delay: var(--rise-delay-1); }
+  .reveal-2 { animation-delay: var(--rise-delay-2); }
+  .reveal-3 { animation-delay: var(--rise-delay-3); }
+  .reveal-4 { animation-delay: var(--rise-delay-4); }
+
+  /* 4. Logo hover lift + category pill slide */
+  .logo-marquee .logo-tag { transform: translate(-50%, 4px); }
+  @media (hover: hover) {
+    .logo-marquee .logo:hover { transform: translateY(var(--logo-lift)); }
+    .logo-marquee .logo:hover .logo-tag { transform: translate(-50%, 0); }
+  }
+
+  /* 5. Text link: arrow nudges right */
+  .text-link-arrow { transition: transform var(--link-hover-duration) ease-out; }
+  .text-link:hover .text-link-arrow,
+  .text-link:focus-visible .text-link-arrow { transform: translateX(var(--link-arrow-nudge)); }
+}
+
+/* Under reduced motion the colour changes still happen, just without the lift
+   or slide; transitions are kept to the colour/opacity only. */
+.logo-marquee .logo {
+  transition: opacity var(--logo-hover-duration) ease-out, transform var(--logo-hover-duration) ease-out;
+}
+.logo-marquee .logo-tag {
+  transition: opacity var(--logo-tag-duration) ease-out, transform var(--logo-tag-duration) ease-out;
+}
+.text-link { transition: color var(--link-hover-duration) ease-out; }
+.text-link-label img { transition: opacity var(--link-hover-duration) ease-out; }
+
+/* ==========================================================================
+   Features — reveal, scroll-linked cards (Vectura pattern) and scenes run in
+   motion.js (requestAnimationFrame). Only the nav item state uses CSS transitions.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  .feature-tab { transition: color var(--feature-tab-duration) ease-out, opacity var(--feature-tab-duration) ease-out; }
+  .feature-name img { transition: opacity var(--feature-name-duration) var(--ease-enter); }
+  .feature-tab-icon {
+    transition: opacity var(--feature-tab-duration) ease-out, margin-right var(--feature-tab-duration) ease-out;
+  }
+}
+
+/* ==========================================================================
+   How it works — step icons. Keyframe %s are Figma's (135:2539, 3.2s loop).
+   At rest (no JS / reduced motion) the icons are fully drawn.
+   ========================================================================== */
+@keyframes hiw-word {
+  from { opacity: 0; transform: translateY(var(--hiw-word-shift)); filter: blur(var(--hiw-word-blur)); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes hiw-fade {                      /* drawn strokes clear before the loop restarts */
+  0%, 80%   { opacity: 1; animation-timing-function: var(--hiw-inout); }
+  95%, 100% { opacity: 0; }
+}
+@keyframes hiw-draw-1 {
+  0%, 6.25% { stroke-dashoffset: 1; visibility: hidden; animation-timing-function: var(--hiw-inout); }
+  6.26%     { visibility: visible; }
+  24%, 100% { stroke-dashoffset: 0; visibility: visible; }
+}
+@keyframes hiw-draw-2 {
+  0%, 24%     { stroke-dashoffset: 1; visibility: hidden; animation-timing-function: var(--hiw-inout); }
+  24.01%      { visibility: visible; }
+  43.75%, 100% { stroke-dashoffset: 0; visibility: visible; }
+}
+@keyframes hiw-draw-3 {
+  0%, 4%        { stroke-dashoffset: 1; visibility: hidden; animation-timing-function: var(--hiw-inout); }
+  4.01%         { visibility: visible; }
+  21.875%, 100% { stroke-dashoffset: 0; visibility: visible; }
+}
+@keyframes hiw-draw-4 {
+  0%, 22%   { stroke-dashoffset: 1; visibility: hidden; animation-timing-function: var(--hiw-inout); }
+  22.01%    { visibility: visible; }
+  50%, 100% { stroke-dashoffset: 0; visibility: visible; }
+}
+@keyframes hiw-pop-1 {
+  0%        { scale: 1; animation-timing-function: var(--hiw-out); }
+  6%, 6.25% { scale: 1.14; animation-timing-function: var(--hiw-inout); }
+  14%, 100% { scale: 1; }
+}
+@keyframes hiw-pop-2 {
+  0%, 42%   { scale: 1; animation-timing-function: var(--hiw-inout); }
+  50%       { scale: 1.14; animation-timing-function: var(--hiw-inout); }
+  59.375%, 100% { scale: 1; }
+}
+@keyframes hiw-knob-a {
+  0%, 10%   { translate: 0 0; animation-timing-function: var(--hiw-inout); }
+  45%, 60%  { translate: 6px 0; animation-timing-function: var(--hiw-inout); }
+  95%, 100% { translate: 0 0; }
+}
+@keyframes hiw-knob-b {
+  0%, 10%   { translate: 0 0; animation-timing-function: var(--hiw-inout); }
+  45%, 60%  { translate: -7px 0; animation-timing-function: var(--hiw-inout); }
+  95%, 100% { translate: 0 0; }
+}
+@keyframes hiw-arrow {
+  0%, 46%  { opacity: 0; translate: 0 -1.25px; animation-timing-function: var(--hiw-inout); }
+  54%      { opacity: 1; translate: 0 1px; animation-timing-function: var(--hiw-inout); }
+  62%      { translate: 0 0; }
+  80%      { opacity: 1; animation-timing-function: var(--hiw-inout); }
+  95%, 100% { opacity: 0; translate: 0 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Icons rest fully drawn; the loop runs only on cards motion.js marks
+     .is-animating — hovered card (mouse) or all cards while on screen (touch).
+     Removing the class snaps the icon back to its drawn rest state. */
+  .hiw-step.is-animating .hiw-draw { stroke-dasharray: 1 1; }
+  .hiw-pop { transform-box: fill-box; transform-origin: center; }
+  .hiw-step.is-animating :is(.hiw-draw, .hiw-pop, .hiw-knob-a, .hiw-knob-b, .hiw-head-arrow) {
+    animation-duration: var(--hiw-loop);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  .hiw-step.is-animating .hiw-draw-1 { animation-name: hiw-draw-1, hiw-fade; }
+  .hiw-step.is-animating .hiw-draw-2 { animation-name: hiw-draw-2, hiw-fade; }
+  .hiw-step.is-animating .hiw-draw-3 { animation-name: hiw-draw-3, hiw-fade; }
+  .hiw-step.is-animating .hiw-draw-4 { animation-name: hiw-draw-4, hiw-fade; }
+  .hiw-step.is-animating .hiw-pop-1 { animation-name: hiw-pop-1; }
+  .hiw-step.is-animating .hiw-pop-2 { animation-name: hiw-pop-2; }
+  .hiw-step.is-animating .hiw-knob-a { animation-name: hiw-knob-a; }
+  .hiw-step.is-animating .hiw-knob-b { animation-name: hiw-knob-b; }
+  .hiw-step.is-animating .hiw-head-arrow { animation-name: hiw-arrow; }
+
+  /* Heading reveal: words (split by motion.js) blur-rise in order, then the subtitle */
+  .js :is(.hiw-head, .why-head, .tm-head, .price-head):not(.is-revealed) .hiw-word,
+  .js :is(.hiw-head, .tm-head, .price-head).is-split:not(.is-revealed) :is(.hiw-lede, .tm-lede, .price-lede) { opacity: 0; }
+  :is(.hiw-head, .why-head, .tm-head, .price-head).is-revealed .hiw-word {
+    animation: hiw-word var(--hiw-word-duration) var(--ease-enter) both;
+    animation-delay: calc(var(--i) * var(--hiw-word-stagger));
+  }
+  :is(.hiw-head, .tm-head, .price-head).is-revealed :is(.hiw-lede, .tm-lede, .price-lede) {
+    animation: rise var(--hiw-word-duration) var(--ease-enter) both;
+    animation-delay: calc(var(--words) * var(--hiw-word-stagger) + var(--hiw-lede-gap));
+  }
+}
+
+/* Card hover (How it works steps + Pricing plans): lift above its neighbours,
+   scale up, soft shadow, border darkens. Uses `scale` so it never fights the
+   reveal's inline transform. Under reduced motion only the shadow + border change. */
+@media (hover: hover) {
+  .hiw-step,
+  .plan {
+    position: relative;
+    transition:
+      scale var(--hiw-card-duration) var(--ease-enter),
+      box-shadow var(--hiw-card-duration) var(--ease-enter),
+      border-color var(--hiw-card-duration) var(--ease-enter);
+  }
+  .hiw-step:hover,
+  .plan:hover {
+    z-index: 1;
+    box-shadow: var(--hiw-card-shadow);
+    border-color: var(--grayscale-500);
+  }
+  .plan.is-featured:hover { box-shadow: var(--hiw-card-shadow); }   /* beats its resting "none" */
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .hiw-step:hover,
+  .plan:hover { scale: var(--hiw-card-scale); }
+}
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .hiw-step,
+  .plan { transition: none; }
+}
+
+/* ==========================================================================
+   Why choose us — the switch flips the card (Figma Default ↔ Variant2).
+   Colours ride the card's custom properties; rows swap with a stagger.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  .why-compare,
+  .why-switch,
+  .why-option,
+  .why-row,
+  .why-eyebrow, .why-stat-value, .why-stat-sub, .why-reason-text, .why-note {
+    transition:
+      background-color var(--why-flip-duration) var(--why-flip-ease),
+      border-color var(--why-flip-duration) var(--why-flip-ease),
+      color var(--why-flip-duration) var(--why-flip-ease);
+  }
+  .why-thumb {
+    transition:
+      transform var(--why-thumb-duration) var(--why-thumb-ease),
+      background-color var(--why-flip-duration) var(--why-flip-ease);
+  }
+  /* Swapped states roll like a drum: old content sits above, new below.
+     Going to Baseline the old line lifts + blurs out while the new one rises
+     in from below; going back reverses. Rows follow each other by 60ms, and
+     outgoing/incoming overlap fully so there's never an empty frame. */
+  .why-swap > *,
+  .why-icon img {
+    transition:
+      opacity var(--why-swap-duration) var(--why-swap-ease),
+      transform var(--why-swap-duration) var(--why-swap-ease),
+      filter var(--why-swap-duration) var(--why-swap-ease),
+      visibility 0s linear;
+    transition-delay: calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger));
+  }
+  .why-compare[data-mode="baseline"] .why-swap > .is-old,
+  .why-compare[data-mode="old"] .why-swap > .is-new {
+    filter: blur(var(--why-swap-blur));
+    transition-delay: calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger)), calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger)),
+      calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger)), calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger) + var(--why-swap-duration));
+  }
+  .why-compare[data-mode="baseline"] .why-swap > .is-old { transform: translateY(calc(-1 * var(--why-swap-shift))); }
+  .why-compare[data-mode="old"] .why-swap > .is-new { transform: translateY(var(--why-swap-shift)); }
+  .why-compare[data-mode="baseline"] .why-icon .is-old,
+  .why-compare[data-mode="old"] .why-icon .is-new {
+    transform: scale(0.75) rotate(-30deg);
+    filter: blur(2px);
+    transition-delay: calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger)), calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger)),
+      calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger)), calc(var(--why-swap-delay) + var(--i, 0) * var(--why-row-stagger) + var(--why-swap-duration));
+  }
+}
+
+/* ==========================================================================
+   Testimonials — wheel roll, active topic, quote crossfade (state set by
+   motion.js: --d per wheel item, aria-current, .is-active / .is-leaving).
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  .tm-wheel li { transition: transform var(--tm-roll-duration) var(--ease-enter), opacity 300ms ease-out; }
+  .tm-wheel li.is-wrapping { transition: none; opacity: 0; }   /* jumps across the hidden end, then fades in */
+  .tm-topic {
+    transition:
+      color var(--tm-roll-duration) var(--ease-enter),
+      transform var(--tm-roll-duration) var(--ease-enter);
+  }
+  @media (hover: hover) {
+    .tm-topic:not([aria-current="true"]):hover { color: #a3a3a3; }
+  }
+  /* Incoming quote rises in from below out of a blur; outgoing lifts away. */
+  .tm-slide {
+    transition:
+      opacity var(--tm-swap-duration) var(--ease-enter),
+      transform var(--tm-swap-duration) var(--ease-enter),
+      filter var(--tm-swap-duration) var(--ease-enter),
+      visibility 0s linear var(--tm-swap-duration);
+  }
+  .tm-slide:not(.is-active) { transform: translateY(var(--tm-swap-shift)); filter: blur(var(--tm-swap-blur)); }
+  .tm-slide.is-leaving { transform: translateY(calc(-1 * var(--tm-swap-shift))); }
+  .tm-slide.is-active { transition-delay: 120ms, 120ms, 120ms, 0s; }
+  .tm-arrow { transition: background-color 200ms ease-out, border-color 200ms ease-out; }
+  @media (hover: hover) {
+    .tm-arrow:hover { background-color: rgb(255 255 255 / 0.08); border-color: var(--white); }
+  }
+}
+
+/* ==========================================================================
+   Pricing — billing switch reuses the Why choose us thumb/option transitions;
+   here: billing-note crossfade, plan + button hover.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  .plan-bill > * {
+    transition:
+      opacity var(--price-note-duration) var(--ease-enter),
+      transform var(--price-note-duration) var(--ease-enter),
+      visibility 0s linear;
+  }
+  .pricing[data-billing="monthly"] .plan-bill .is-annual,
+  .pricing[data-billing="annual"] .plan-bill .is-monthly {
+    transform: translateY(6px);
+    transition-delay: 0s, 0s, var(--price-note-duration);
+  }
+  .plan-cta {
+    transition:
+      background-color var(--price-cta-duration) ease-out,
+      box-shadow var(--price-cta-duration) ease-out,
+      transform var(--price-cta-duration) var(--ease-enter);
+  }
+  @media (hover: hover) {
+    .plan-cta:hover { background-color: #f5f5f5; box-shadow: 2px 6px 20px 0 rgb(0 0 0 / 0.1); transform: translateY(-2px); }
+  }
+}
+
+/* ==========================================================================
+   Footer — brand entrance (Figma motion on 155:20031, played once on view).
+   The robot arm divider is drawn by motion.js (rAF, no keyframes).
+   ========================================================================== */
+@keyframes foot-brand-in {
+  from { opacity: 0; translate: var(--foot-brand-shift) 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .js .foot-brand:not(.is-in) .foot-logo { opacity: 0; }
+  .foot-brand.is-in .foot-logo { animation: foot-brand-in var(--foot-brand-duration) cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+  .foot-col a { transition: color 200ms ease-out; }
+
+  /* Text roll: two stacked copies in a one-line clip; hover/focus slides
+     both up one line. Markup is added by motion.js (rollText). */
+  .roll { display: inline-flex; flex-direction: column; height: 1lh; overflow: clip; vertical-align: top; }
+  .roll > span { display: block; transition: transform var(--roll-duration) var(--roll-spring); }
+  :is(.foot-col, .topnav-links) a:focus-visible .roll > span { transform: translateY(-100%); }
+  .foot-social img { transition: filter 350ms var(--ease-enter); }
+}
+@media (hover: hover) {
+  .foot-col a:hover { color: var(--white); }
+  :is(.foot-col, .topnav-links) a:hover .roll > span { transform: translateY(-100%); }
+  .topnav-links a:hover { color: var(--black); }
+  /* Icons rest at Figma's dimmed #A3A3A3; hover brightens them to white.
+     brightness(1.565) = 255 / 163, so the fade is a straight grey → white
+     ramp (brightness(0) invert(1) dipped through mid-grey on the way). */
+  .foot-social a:hover img { filter: brightness(1.565); }
+}
+.foot-social img { filter: brightness(1); }
+.foot-social a:focus-visible img { filter: brightness(1.565); }   /* keyboard, any device */
+
+/* ==========================================================================
+   Nav bar — drops in on load; links share the footer text roll (above);
+   colour #525252 → black. Anchor jumps scroll smoothly.
+   ========================================================================== */
+@keyframes nav-in {
+  from { opacity: 0; transform: translateY(var(--nav-in-shift)); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .site-nav { animation: nav-in var(--nav-in-duration) var(--ease-enter) both; }
+  .topnav-links a { transition: color 200ms ease-out; }
+  .topnav-burger span { transition: transform var(--nav-menu-duration) var(--ease-enter); }
+}
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  /* Sheet unrolls top → bottom; links then rise in, staggered. Closing
+     rolls it back up (links fade with it). */
+  .topnav-right {
+    transition:
+      clip-path var(--nav-menu-duration) cubic-bezier(0.65, 0, 0.35, 1),
+      visibility 0s linear var(--nav-menu-duration);
+  }
+  .site-nav.is-open .topnav-right { transition-delay: 0s; }
+  .topnav-right > * { transition: opacity 250ms ease-out, transform 250ms ease-out; }
+  .site-nav:not(.is-open) .topnav-right > * { opacity: 0; }
+  .site-nav.is-open .topnav-links li {
+    animation: menu-item-in 500ms var(--ease-enter) both;
+    animation-delay: calc(var(--nav-menu-duration) * 0.5 + var(--i, 0) * 60ms);
+  }
+  .site-nav.is-open .topnav-right > .btn {
+    animation: menu-item-in 500ms var(--ease-enter) both;
+    animation-delay: calc(var(--nav-menu-duration) * 0.5 + 240ms);
+  }
+}
+@keyframes menu-item-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}

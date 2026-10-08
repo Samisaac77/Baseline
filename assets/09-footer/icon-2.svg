@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="23.25" height="13.25" viewBox="0 0 23.25 13.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Housing">
+<path id="Housing body" d="M20.625 0.625H2.625C1.52043 0.625 0.625 1.52043 0.625 2.625V10.625C0.625 11.7296 1.52043 12.625 2.625 12.625H20.625C21.7296 12.625 22.625 11.7296 22.625 10.625V2.625C22.625 1.52043 21.7296 0.625 20.625 0.625Z" fill="#0B0B0B" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Housing vent" d="M5.625 8.625H17.625" stroke="white" stroke-opacity="0.4" stroke-linecap="round"/>
+</g>
+</svg>
