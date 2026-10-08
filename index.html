@@ -587,26 +587,38 @@
       color: var(--grayscale-500);       /* rest: gray → ink on hover (motion.css) */
     }
     .text-link-label {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;                          /* underline sits 4px below the text */
+      padding-bottom: 4.5px;             /* underline sits 4px below the text */
       font-family: var(--sans);
       font-size: 18px;
       line-height: 24px;                 /* fixed line box so the arrow can centre on it */
       letter-spacing: -0.54px;
       white-space: nowrap;
     }
-    /* Underline matches the text width: width 0 + min-width 100% means the
-       line never adds its own (fixed Figma) width to the label. */
-    .text-link-label img { width: 0; min-width: 100%; height: 0.5px; opacity: 0.2; }
+    /* Underline drawn in CSS at the label's width (Figma: 0.5px #404040).
+       The exported 0.5px-tall SVG <img> can rasterise to nothing on iOS
+       Safari, so it's kept in the markup but hidden. */
+    .text-link-label img { display: none; }
+    .text-link-label::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0.5px;
+      background: var(--link-line, #404040);
+      opacity: 0.2;
+    }
     /* Arrow centred on the text line (24px box), +1px for the optical centre
        of lowercase text — top-aligned it sat ~3px high. */
     .text-link-arrow { flex-shrink: 0; width: 20px; height: 20px; margin-top: 3px; }
     /* Touch screens can't hover, so the 20% rest underline never brightened
        and read as missing: show it at full strength and 1px thick. */
     @media (hover: none) {
-      .text-link-label img { opacity: 1; min-height: 1px; }
+      .text-link-label::after { opacity: 1; height: 1px; }
     }
     .text-link:focus-visible { outline: 2px solid var(--black); outline-offset: 4px; }
 
@@ -1438,7 +1450,8 @@
       gap: 24px;
     }
     .text-link.is-light { margin-top: 0; color: var(--white); }
-    .text-link.is-light .text-link-label img { opacity: 1; }
+    .text-link.is-light { --link-line: #f5f5f5; }
+    .text-link.is-light .text-link-label::after { opacity: 1; }
     .text-link.is-light:focus-visible { outline-color: var(--white); }
     .tm-arrows { display: flex; gap: 10px; }
     .tm-arrow {

@@ -425,8 +425,8 @@
 /* Text link: rest state (gray text, 20% underline, 4px gap) is in index.html. */
 .text-link:hover,
 .text-link:focus-visible { color: var(--black); }
-.text-link:hover .text-link-label img,
-.text-link:focus-visible .text-link-label img { opacity: 1; }
+.text-link:hover .text-link-label::after,
+.text-link:focus-visible .text-link-label::after { opacity: 1; }
 
 /* Motion ---------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
@@ -460,7 +460,7 @@
   transition: opacity var(--logo-tag-duration) ease-out, transform var(--logo-tag-duration) ease-out;
 }
 .text-link { transition: color var(--link-hover-duration) ease-out; }
-.text-link-label img { transition: opacity var(--link-hover-duration) ease-out; }
+.text-link-label::after { transition: opacity var(--link-hover-duration) ease-out; }
 
 /* ==========================================================================
    Features — reveal, scroll-linked cards (Vectura pattern) and scenes run in
