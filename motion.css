@@ -237,6 +237,27 @@
   will-change: transform;
 }
 
+/* Mockup tilt-in as a scroll-driven animation: it runs on the compositor in
+   lock-step with the scroll, so it no longer skips on phones (the JS version
+   wrote the transform from scroll events, which arrive late and in bursts on
+   mobile). Same mapping as motion.js: progress 0 when the stage's top edge is
+   at the bottom of the viewport, 1 once it has climbed 88vh. motion.js keeps
+   the transform as a fallback where animation-timeline isn't supported. */
+@keyframes mockup-tilt-in {
+  from { transform: translateY(48px) scale(0.84) rotateX(20deg); }
+  to   { transform: translateY(0) scale(1) rotateX(0deg); }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .mockup-stage { view-timeline: --mockup block; }
+    .mockup-reveal {
+      animation: mockup-tilt-in linear both;
+      animation-timeline: --mockup;
+      animation-range: cover 0% cover 88vh;
+    }
+  }
+}
+
 .uptime-bars i,
 .bars .bar { transform-origin: bottom; }
 

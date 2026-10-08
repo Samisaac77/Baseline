@@ -10,7 +10,7 @@
 *Refer to the specific section code files for exact micro-timings, SVG data attributes, and scroll math.*
 
 - **Nav bar:** Sticky drop-in. Links use spring text roll. Smooth anchor scrolling. Mobile burger opens a full-screen sheet (unrolls down, links rise in staggered, page scroll locked).
-- **Hero:** Staggered blur rise, dither scramble H1, status pill scramble, grid drift. Dashboard tilts on scroll and replays on entry. Phones (≤767px): mockup is a cropped 60%-scale card (Mobbin pattern); same tilt-in motion.
+- **Hero:** Staggered blur rise, dither scramble H1, status pill scramble, grid drift. Dashboard tilts on scroll (CSS scroll-driven animation on the compositor where supported, JS fallback) and replays on entry. Phones (≤767px): mockup is a cropped 60%-scale card (Mobbin pattern); same tilt-in motion.
 - **Integrations:** Staggered blur rise (35% visibility). Endless rAF marquee (stops on hover, finger-down or keyboard focus; a tap does not pause it). Keeps full speed at low frame rates (frame step capped at 1s).
 - **Features:** Scroll-linked cards, sticky nav, declarative SVG illustrations (`data-float/pulse/glow`). Entrances trigger at 15% visibility. Stacked layouts (≤1100px): each card shows its title; the title arrow fades dimmed (20%) → black (500ms) when that card becomes active on scroll.
 - **Trust badges:** Staggered dither reveal on text; a single shared progress loop drives all count-ups and accent bars.

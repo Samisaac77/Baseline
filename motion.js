@@ -1552,10 +1552,15 @@
     return (vh - docTop) / (vh * 0.88);
   }
 
+  // Where scroll-driven animations exist, motion.css owns the tilt (smooth,
+  // on the compositor); this callback then only drives play / rewind.
+  var cssTilt = window.CSS && CSS.supports && CSS.supports('animation-timeline: view()');
   var stopReveal = scrollReveal(stage, function (p, inView) {
     var inv = 1 - p;
-    reveal.style.transform =
-      'translateY(' + (48 * inv) + 'px) scale(' + (0.84 + 0.16 * p) + ') rotateX(' + (20 * inv) + 'deg)';
+    if (!cssTilt) {
+      reveal.style.transform =
+        'translateY(' + (48 * inv) + 'px) scale(' + (0.84 + 0.16 * p) + ') rotateX(' + (20 * inv) + 'deg)';
+    }
     var rest = restingProgress();
     var resetAt = rest < RESET_AT ? RESET_AT : (rest + ACTIVATE_AT) / 2;
     if (!inView || p < resetAt) mockup.setActive(false);
