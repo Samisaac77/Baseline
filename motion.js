@@ -988,8 +988,9 @@
      Testimonials — topic wheel + quote card carousel. Each wheel item sits
      at its circular offset d ∈ [-3, 2] from the active topic (CSS turns --d
      into translateY); an item that wraps round jumps with no transition while
-     hidden, then fades back. Autoplay advances every 5s while on screen and
-     not hovered / focused; a manual pick restarts the 5s count.
+     hidden, then fades back. Autoplay advances every 5s while on screen —
+     no hover pause (a resting cursor over the card stalled it); it pauses
+     only for keyboard focus, and a manual pick restarts the 5s count.
      ------------------------------------------------------------------------ */
   function testimonials(section) {
     if (!section) return function () {};
@@ -1038,25 +1039,21 @@
     }
 
     // Autoplay
-    var visible = false, hovering = false, focused = false, stopped = reduceMotion;   // reduced motion: no autoplay
+    var visible = false, focused = false, stopped = reduceMotion;   // reduced motion: no autoplay
     var timer = 0;
     function schedule() {
       clearTimeout(timer);
-      if (stopped || !visible || hovering || focused) return;
+      if (stopped || !visible || focused) return;
       timer = setTimeout(function () { go(active + 1); schedule(); }, cssMs('--tm-autoplay'));
     }
     // A manual pick restarts the 5s count from that review (no early jump).
     function takeOver() { schedule(); }
 
     var row = section.querySelector('.tm-body');
-    function onEnter(e) { if (e.pointerType === 'mouse') { hovering = true; schedule(); } }
-    function onLeave(e) { if (e.pointerType === 'mouse') { hovering = false; schedule(); } }
     // Pause for keyboard focus only — a mouse click also focuses the button,
     // which shouldn't stop the rotation.
     function onFocusIn(e) { focused = e.target.matches(':focus-visible'); schedule(); }
     function onFocusOut(e) { if (!row.contains(e.relatedTarget)) { focused = false; schedule(); } }
-    row.addEventListener('pointerenter', onEnter);
-    row.addEventListener('pointerleave', onLeave);
     row.addEventListener('focusin', onFocusIn);
     row.addEventListener('focusout', onFocusOut);
 
@@ -1097,8 +1094,6 @@
       if (io) io.disconnect();
       stopReveal();
       stopHead();
-      row.removeEventListener('pointerenter', onEnter);
-      row.removeEventListener('pointerleave', onLeave);
       row.removeEventListener('focusin', onFocusIn);
       row.removeEventListener('focusout', onFocusOut);
       topics.forEach(function (b) { b.removeEventListener('click', onTopic); });

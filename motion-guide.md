@@ -16,6 +16,6 @@
 - **Trust badges:** Staggered dither reveal on text; a single shared progress loop drives all count-ups and accent bars.
 - **How it works:** Cursor spotlight on grid, staggered text blur-rise, card scale/shadow hovers, and a unified CSS loop for step icons.
 - **Why choose us:** Badge and card entrances via `useReveal` (15%). Baseline switch triggers coordinated thumb slide, card fade, staggered drum-style row swaps, and count-ups.
-- **Testimonials:** Grid cursor spotlight. Text blur-rise, scrolling topic wheel offsets, and crossfade quote swaps. Autoplays while in view, pausing on hover (reduced motion snaps instantly).
+- **Testimonials:** Grid cursor spotlight. Text blur-rise, scrolling topic wheel offsets, and crossfade quote swaps. Autoplays every 5s while in view (no hover pause; pauses only for keyboard focus; a manual pick restarts the count). Reduced motion: no autoplay, instant swaps.
 - **Pricing:** Entrances via `useReveal`. Toggle triggers switch slide, price tweens, and crossfades. Card and CTA hovers.
 - **Footer:** Grid cursor spotlight, `useReveal` entrances, and H1-style dither reveal. Links use spring text roll; socials brighten on hover. SVG robot arm divider uses continuous rAF cycle (pauses off-screen; reduced motion snaps to static).
