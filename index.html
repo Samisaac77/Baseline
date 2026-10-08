@@ -593,14 +593,21 @@
       gap: 4px;                          /* underline sits 4px below the text */
       font-family: var(--sans);
       font-size: 18px;
-      line-height: normal;
+      line-height: 24px;                 /* fixed line box so the arrow can centre on it */
       letter-spacing: -0.54px;
       white-space: nowrap;
     }
     /* Underline matches the text width: width 0 + min-width 100% means the
        line never adds its own (fixed Figma) width to the label. */
     .text-link-label img { width: 0; min-width: 100%; height: 0.5px; opacity: 0.2; }
-    .text-link-arrow { flex-shrink: 0; width: 20px; height: 20px; }
+    /* Arrow centred on the text line (24px box), +1px for the optical centre
+       of lowercase text — top-aligned it sat ~3px high. */
+    .text-link-arrow { flex-shrink: 0; width: 20px; height: 20px; margin-top: 3px; }
+    /* Touch screens can't hover, so the 20% rest underline never brightened
+       and read as missing: show it at full strength and 1px thick. */
+    @media (hover: none) {
+      .text-link-label img { opacity: 1; min-height: 1px; }
+    }
     .text-link:focus-visible { outline: 2px solid var(--black); outline-offset: 4px; }
 
     /* ───────────── Features (Figma 59:4889) ───────────── */
